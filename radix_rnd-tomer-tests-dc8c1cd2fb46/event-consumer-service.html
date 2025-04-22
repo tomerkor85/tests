@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Consumer Service - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Event Consumer Service</h1>
+            <p>Processes events from the queue and writes to storage</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Event Consumer Service is a critical backend component of the RadixInsight platform that processes events from the message queue and writes them to the appropriate storage systems. It acts as the bridge between the real-time event ingestion pipeline and the persistent storage layer, ensuring reliable and efficient data processing.</p>
+                
+                <p>Key responsibilities of the Event Consumer Service include:</p>
+                <ul>
+                    <li>Consuming events from Kafka/Redis Streams message queue</li>
+                    <li>Performing additional validation and transformation</li>
+                    <li>Handling data partitioning and sharding</li>
+                    <li>Writing events to ClickHouse for analytics processing</li>
+                    <li>Maintaining processing order and exactly-once semantics</li>
+                    <li>Handling backpressure and scaling to match ingestion volume</li>
+                    <li>Monitoring processing metrics and handling failures</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/event-consumer-architecture.png" alt="Event Consumer Service Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EEvent Consumer Service Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The Event Consumer Service architecture consists of several key components:</p>
+                        <ul>
+                            <li><strong>Consumer Manager</strong>: Coordinates consumer instances and manages scaling</li>
+                            <li><strong>Message Processor</strong>: Reads and processes events from the message queue</li>
+                            <li><strong>Transformation Pipeline</strong>: Applies business logic and data transformations</li>
+                            <li><strong>Storage Writer</strong>: Handles efficient writing to ClickHouse database</li>
+                            <li><strong>Offset Manager</strong>: Tracks processing progress and handles commits</li>
+                            <li><strong>Error Handler</strong>: Manages retries and dead-letter queues</li>
+                            <li><strong>Metrics Collector</strong>: Gathers performance and operational metrics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>Event Messages</strong>: JSON-formatted event data from Kafka/Redis Streams</li>
+                            <li><strong>Configuration</strong>: Processing rules, batch sizes, and retry policies</li>
+                            <li><strong>Schema Registry</strong>: Event schemas for validation and transformation</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>ClickHouse Records</strong>: Processed events written to ClickHouse tables</li>
+                            <li><strong>Processing Metrics</strong>: Throughput, latency, and error rate statistics</li>
+                            <li><strong>Error Records</strong>: Failed events sent to dead-letter queue</li>
+                            <li><strong>Offset Commits</strong>: Processing progress markers for the message queue</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Kafka Consumer Implementation</h3>
+                    <pre><code class="language-python"># app/consumer.py
+import asyncio
+import json
+import logging
+from aiokafka import AIOKafkaConsumer
+from typing import Dict, List, Any
+from datetime import datetime
+
+from app.db import clickhouse_client
+from app.config import settings
+from app.metrics import increment_counter, record_latency, gauge
+from app.transform import transform_event
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class EventConsumer:
+    """
+    Consumes events from Kafka and writes to ClickHouse
+    """
+    def __init__(self):
+        self.consumer = None
+        self.running = False
+        self.batch_size = settings.CONSUMER_BATCH_SIZE
+        self.commit_interval = settings.CONSUMER_COMMIT_INTERVAL
+        self.max_poll_interval = settings.CONSUMER_MAX_POLL_INTERVAL
+        self.consumer_group = settings.CONSUMER_GROUP
+        self.topic = settings.EVENTS_TOPIC
+        self.bootstrap_servers = settings.KAFKA_BOOTSTRAP_SERVERS
+        self.last_commit_time = datetime.now().timestamp()
+        self.processed_count = 0
+        self.error_count = 0
+        
+    async def start(self):
+        """
+        Start the consumer
+        """
+        if self.running:
+            return
+            
+        self.running = True
+        
+        # Create Kafka consumer
+        self.consumer = AIOKafkaConsumer(
+            self.topic,
+            bootstrap_servers=self.bootstrap_servers,
+            group_id=self.consumer_group,
+            auto_offset_reset="earliest",
+            enable_auto_commit=False,
+            max_poll_interval_ms=self.max_poll_interval * 1000
+        )
+        
+        # Start consumer
+        await self.consumer.start()
+        logger.info(f"Started Kafka consumer for topic {self.topic}")
+        
+        # Process messages
+        try:
+            batch = []
+            async for message in self.consumer:
+                try:
+                    # Parse message
+                    event = json.loads(message.value.decode("utf-8"))
+                    
+                    # Transform event
+                    transformed_event = await transform_event(event)
+                    
+                    # Add to batch
+                    batch.append(transformed_event)
+                    
+                    # Process batch if full
+                    if len(batch) >= self.batch_size:
+                        await self._process_batch(batch)
+                        batch = []
+                        
+                    # Commit offsets periodically
+                    current_time = datetime.now().timestamp()
+                    if current_time - self.last_commit_time >= self.commit_interval:
+                        await self.consumer.commit()
+                        self.last_commit_time = current_time
+                        logger.debug(f"Committed offsets, processed {self.processed_count} events")
+                        
+                except Exception as e:
+                    self.error_count += 1
+                    logger.error(f"Error processing message: {str(e)}")
+                    
+                # Update metrics
+                gauge("consumer_batch_size", len(batch))
+                gauge("consumer_processed_count", self.processed_count)
+                gauge("consumer_error_count", self.error_count)
+                
+        except asyncio.CancelledError:
+            logger.info("Consumer task cancelled")
+        finally:
+            # Process any remaining events
+            if batch:
+                await self._process_batch(batch)
+                
+            # Commit final offsets
+            await self.consumer.commit()
+            
+            # Stop consumer
+            await self.consumer.stop()
+            self.running = False
+            logger.info("Stopped Kafka consumer")
+            
+    async def _process_batch(self, batch: List[Dict[str, Any]]):
+        """
+        Process a batch of events and write to ClickHouse
+        """
+        if not batch:
+            return
+            
+        start_time = datetime.now().timestamp()
+        
+        try:
+            # Write to ClickHouse
+            await clickhouse_client.insert_events(batch)
+            
+            # Update metrics
+            batch_size = len(batch)
+            self.processed_count += batch_size
+            increment_counter("events_processed", batch_size)
+            record_latency("batch_processing_time", datetime.now().timestamp() - start_time)
+            
+            logger.info(f"Processed batch of {batch_size} events")
+        except Exception as e:
+            self.error_count += len(batch)
+            increment_counter("events_failed", len(batch))
+            logger.error(f"Error processing batch: {str(e)}")
+            
+            # Implement dead-letter queue logic here
+            
+    async def stop(self):
+        """
+        Stop the consumer
+        """
+        if not self.running:
+            return
+            
+        self.running = False
+        await self.consumer.stop()
+        logger.info("Stopped Kafka consumer")</code></pre>
+
+                    <h3>ClickHouse Database Client</h3>
+                    <pre><code class="language-python"># app/db.py
+import asyncio
+import aiochclient
+import aiohttp
+from typing import Dict, List, Any
+import logging
+
+from app.config import settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ClickHouseClient:
+    """
+    Client for interacting with ClickHouse database
+    """
+    def __init__(self):
+        self.url = settings.CLICKHOUSE_URL
+        self.user = settings.CLICKHOUSE_USER
+        self.password = settings.CLICKHOUSE_PASSWORD
+        self.database = settings.CLICKHOUSE_DATABASE
+        self.table = settings.CLICKHOUSE_EVENTS_TABLE
+        self.client = None
+        self.session = None
+        
+    async def connect(self):
+        """
+        Connect to ClickHouse
+        """
+        if self.client is not None:
+            return
+            
+        self.session = aiohttp.ClientSession()
+        self.client = aiochclient.ChClient(
+            self.session,
+            url=self.url,
+            user=self.user,
+            password=self.password,
+            database=self.database
+        )
+        
+        logger.info(f"Connected to ClickHouse at {self.url}")
+        
+    async def close(self):
+        """
+        Close connection to ClickHouse
+        """
+        if self.session is not None:
+            await self.session.close()
+            self.session = None
+            self.client = None
+            logger.info("Closed ClickHouse connection")
+            
+    async def insert_events(self, events: List[Dict[str, Any]]):
+        """
+        Insert events into ClickHouse
+        """
+        if not events:
+            return
+            
+        if self.client is None:
+            await self.connect()
+            
+        # Prepare events for insertion
+        prepared_events = []
+        for event in events:
+            # Extract required fields
+            prepared_event = {
+                "event_id": event.get("event_id"),
+                "event_name": event.get("event_name"),
+                "project_id": event.get("project_id"),
+                "timestamp": event.get("timestamp"),
+                "server_timestamp": event.get("server_timestamp"),
+                "user_id": event.get("user_id", ""),
+                "anonymous_id": event.get("anonymous_id", ""),
+                "session_id": event.get("session_id", ""),
+                "ip_address": event.get("ip_address", ""),
+                
+                # Extract geo data
+                "country": event.get("geo", {}).get("country", ""),
+                "region": event.get("geo", {}).get("region", ""),
+                "city": event.get("geo", {}).get("city", ""),
+                
+                # Serialize properties as JSON
+                "properties": json.dumps(event.get("properties", {}))
+            }
+            
+            prepared_events.append(prepared_event)
+            
+        # Insert into ClickHouse
+        await self.client.execute(
+            f"INSERT INTO {self.table} VALUES",
+            *prepared_events
+        )
+        
+        logger.info(f"Inserted {len(events)} events into ClickHouse")
+        
+    async def execute_query(self, query: str, params=None):
+        """
+        Execute a query against ClickHouse
+        """
+        if self.client is None:
+            await self.connect()
+            
+        return await self.client.execute(query, params)
+
+# Create singleton instance
+clickhouse_client = ClickHouseClient()</code></pre>
+
+                    <h3>Event Transformation Logic</h3>
+                    <pre><code class="language-python"># app/transform.py
+import json
+from typing import Dict, Any
+from datetime import datetime, timezone
+import hashlib
+
+async def transform_event(event: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Apply transformations to event before storage
+    """
+    # Create a copy to avoid modifying the original
+    transformed = event.copy()
+    
+    # Ensure event has an ID
+    if "event_id" not in transformed:
+        # Generate deterministic ID based on content
+        content_hash = hashlib.md5(json.dumps(transformed, sort_keys=True).encode()).hexdigest()
+        transformed["event_id"] = content_hash
+    
+    # Convert timestamp to datetime for easier querying
+    if "timestamp" in transformed:
+        # Store original timestamp
+        transformed["original_timestamp"] = transformed["timestamp"]
+        
+        # Convert to datetime string in UTC
+        timestamp_ms = int(
+(Content truncated due to size limit. Use line ranges to read in chunks)

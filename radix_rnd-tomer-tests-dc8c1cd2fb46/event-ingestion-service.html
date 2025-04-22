@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ingestion Service - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Event Ingestion Service</h1>
+            <p>Validates, enriches, and publishes events to the message queue</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Event Ingestion Service is a critical component of the RadixInsight platform, responsible for receiving, validating, enriching, and publishing events to the message queue for further processing. It serves as the first processing layer after the API Gateway, ensuring that all incoming event data meets the platform's requirements before being accepted for analysis.</p>
+                
+                <p>Key responsibilities of the Event Ingestion Service include:</p>
+                <ul>
+                    <li>Validating event data against predefined schemas</li>
+                    <li>Enriching events with additional metadata (IP geolocation, user agent info, etc.)</li>
+                    <li>Normalizing event timestamps and properties</li>
+                    <li>Detecting and handling duplicate events</li>
+                    <li>Publishing validated events to the message queue</li>
+                    <li>Providing immediate feedback to clients on event acceptance</li>
+                    <li>Monitoring and reporting on ingestion metrics</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/event-ingestion-architecture.png" alt="Event Ingestion Service Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EEvent Ingestion Service Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The Event Ingestion Service architecture consists of several key components:</p>
+                        <ul>
+                            <li><strong>Request Handler</strong>: Processes incoming event batches from the API Gateway</li>
+                            <li><strong>Schema Validator</strong>: Validates events against predefined JSON schemas</li>
+                            <li><strong>Enrichment Pipeline</strong>: Adds metadata to events (geolocation, device info, etc.)</li>
+                            <li><strong>Deduplication Service</strong>: Detects and handles duplicate event submissions</li>
+                            <li><strong>Message Publisher</strong>: Publishes validated events to Kafka/Redis Streams</li>
+                            <li><strong>Metrics Collector</strong>: Gathers performance and operational metrics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>Event Batches</strong>: Arrays of event objects from client applications</li>
+                            <li><strong>Request Metadata</strong>: HTTP headers, IP address, timestamp</li>
+                            <li><strong>Project Configuration</strong>: Event schemas, validation rules, enrichment settings</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>Validated Events</strong>: Events published to the message queue</li>
+                            <li><strong>Response Status</strong>: Success/failure indicators for client feedback</li>
+                            <li><strong>Error Details</strong>: Validation errors and rejection reasons</li>
+                            <li><strong>Ingestion Metrics</strong>: Event counts, validation rates, latency measurements</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Event Ingestion Service (Python/FastAPI)</h3>
+                    <pre><code class="language-python"># app/main.py
+from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field, validator
+from typing import List, Dict, Any, Optional
+import asyncio
+import uuid
+import time
+import json
+import logging
+from datetime import datetime, timezone
+
+from app.auth import verify_api_key
+from app.db import kafka_producer
+from app.enrichment import enrich_events
+from app.deduplication import is_duplicate_event
+from app.metrics import increment_counter, record_latency
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="RadixInsight Event Ingestion API",
+    description="API for collecting analytics events",
+    version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Define event models
+class EventProperty(BaseModel):
+    """Model for event properties"""
+    class Config:
+        extra = "allow"  # Allow additional fields
+
+class Event(BaseModel):
+    """Model for a single event"""
+    event_name: str
+    timestamp: int = Field(..., description="Unix timestamp in milliseconds")
+    user_id: Optional[str] = None
+    anonymous_id: Optional[str] = None
+    session_id: Optional[str] = None
+    properties: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    
+    @validator('event_name')
+    def validate_event_name(cls, v):
+        if not v or len(v) > 100:
+            raise ValueError('event_name must be between 1 and 100 characters')
+        return v
+    
+    @validator('timestamp')
+    def validate_timestamp(cls, v):
+        # Ensure timestamp is not in the future (with 5 min grace period)
+        now = int(time.time() * 1000)
+        if v > now + (5 * 60 * 1000):
+            raise ValueError('timestamp cannot be in the future')
+        
+        # Ensure timestamp is not too old (max 30 days)
+        if v < now - (30 * 24 * 60 * 60 * 1000):
+            raise ValueError('timestamp is too old (max 30 days)')
+        
+        return v
+
+class EventBatch(BaseModel):
+    """Model for a batch of events"""
+    events: List[Event]
+
+# Routes
+@app.post("/collect", status_code=202)
+async def collect_events(
+    batch: EventBatch,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    api_key: str = Depends(verify_api_key)
+):
+    """
+    Collect a batch of events from client
+    """
+    start_time = time.time()
+    
+    # Get request metadata
+    client_ip = request.client.host
+    user_agent = request.headers.get("user-agent", "")
+    
+    # Process events
+    valid_events = []
+    invalid_events = []
+    
+    for event in batch.events:
+        try:
+            # Generate event ID if not provided
+            event_id = str(uuid.uuid4())
+            
+            # Check for duplicates
+            if await is_duplicate_event(event_id, event.dict()):
+                logger.info(f"Duplicate event detected: {event_id}")
+                continue
+            
+            # Enrich event with metadata
+            enriched_event = await enrich_events(
+                event.dict(),
+                client_ip=client_ip,
+                user_agent=user_agent,
+                api_key=api_key,
+                event_id=event_id
+            )
+            
+            valid_events.append(enriched_event)
+        except Exception as e:
+            logger.error(f"Error processing event: {str(e)}")
+            invalid_events.append({
+                "event": event.dict(),
+                "error": str(e)
+            })
+    
+    # Publish valid events to Kafka in background
+    if valid_events:
+        background_tasks.add_task(
+            publish_events_to_kafka,
+            valid_events
+        )
+    
+    # Record metrics
+    record_latency("event_ingestion_latency", time.time() - start_time)
+    increment_counter("events_received", len(batch.events))
+    increment_counter("events_valid", len(valid_events))
+    increment_counter("events_invalid", len(invalid_events))
+    
+    # Return response
+    return {
+        "status": "success",
+        "processed": len(valid_events),
+        "failed": len(invalid_events),
+        "errors": invalid_events if invalid_events else None
+    }
+
+async def publish_events_to_kafka(events: List[Dict]):
+    """
+    Publish events to Kafka
+    """
+    try:
+        for event in events:
+            # Convert to JSON string
+            event_json = json.dumps(event)
+            
+            # Publish to Kafka
+            await kafka_producer.send(
+                topic="events",
+                value=event_json.encode("utf-8"),
+                key=event.get("project_id", "default").encode("utf-8")
+            )
+        
+        # Flush to ensure delivery
+        await kafka_producer.flush()
+        
+        logger.info(f"Published {len(events)} events to Kafka")
+    except Exception as e:
+        logger.error(f"Error publishing events to Kafka: {str(e)}")
+        # Implement retry logic or dead letter queue here
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint
+    """
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}</code></pre>
+
+                    <h3>Event Enrichment Module</h3>
+                    <pre><code class="language-python"># app/enrichment.py
+import geoip2.database
+import user_agents
+from typing import Dict, Any
+from datetime import datetime, timezone
+
+# Initialize GeoIP database
+geo_reader = geoip2.database.Reader('data/GeoLite2-City.mmdb')
+
+async def enrich_events(event: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    """
+    Enrich event with additional metadata
+    """
+    # Add event ID
+    event["event_id"] = kwargs.get("event_id")
+    
+    # Add server timestamp
+    event["server_timestamp"] = int(datetime.now(timezone.utc).timestamp() * 1000)
+    
+    # Add project ID from API key
+    event["project_id"] = kwargs.get("api_key").split("_")[0]
+    
+    # Add IP address
+    client_ip = kwargs.get("client_ip")
+    if client_ip:
+        event["ip_address"] = client_ip
+        
+        # Add geolocation data
+        try:
+            geo_data = geo_reader.city(client_ip)
+            event["geo"] = {
+                "country": geo_data.country.iso_code,
+                "region": geo_data.subdivisions.most_specific.iso_code if geo_data.subdivisions else None,
+                "city": geo_data.city.name,
+                "latitude": geo_data.location.latitude,
+                "longitude": geo_data.location.longitude
+            }
+        except:
+            # IP not found in database or other error
+            event["geo"] = None
+    
+    # Add user agent data
+    user_agent_string = kwargs.get("user_agent")
+    if user_agent_string:
+        user_agent = user_agents.parse(user_agent_string)
+        event["user_agent"] = {
+            "browser": user_agent.browser.family,
+            "browser_version": user_agent.browser.version_string,
+            "os": user_agent.os.family,
+            "os_version": user_agent.os.version_string,
+            "device": user_agent.device.family,
+            "is_mobile": user_agent.is_mobile,
+            "is_tablet": user_agent.is_tablet,
+            "is_bot": user_agent.is_bot
+        }
+    
+    return event</code></pre>
+
+                    <h3>Client Usage Example</h3>
+                    <pre><code class="language-javascript">// Example of sending events to the Event Ingestion Service
+const sendEvents = async (events) => {
+  try {
+    const response = await fetch('https://api.radixinsight.company.com/collect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': 'YOUR_API_KEY'
+      },
+      body: JSON.stringify({
+        events: events
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.status === 202) {
+      console.log(`Successfully sent ${result.processed} events`);
+      
+      if (result.failed > 0) {
+        console.warn(`Failed to process ${result.failed} events`);
+        console.warn('Errors:', result.errors);
+      }
+    } else {
+      console.error('Failed to send events:', result);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error sending events:', error);
+    throw error;
+  }
+};
+
+// Example usage
+sendEvents([
+  {
+    event_name: 'page_view',
+    timestamp: Date.now(),
+    user_id: 'user-123',
+    properties: {
+      page: '/home',
+      referrer: document.referrer,
+      title: document.title
+    }
+  },
+  {
+    event_name: 'button_click',
+    timestamp: Date.now(),
+    user_id: 'user-123',
+    properties: {
+      button_id: 'signup-button',
+      button_text: 'Sign Up'
+    }
+  }
+]);</code></pre>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>API Integration</h2>
+                <p>The Event Ingestion Service exposes the following API endpoints:</p>
+                <ul>
+                    <li><a href="../api/index.html#collect">POST /collect</a> - Submit a batch of events for processing</li>
+                    <li><a href="../api/index.html#health">GET /health</a> - Check the health status of the service</li>
+                </ul>
+                <p>For complete API documentation, visit the <a href="../api/index.html">RadixInsight API Reference</a>.</p>
+            </div>
+
+            <div class="component-section">
+                <h2>Component Relationships</h2>
+                <div class="component-relationships">
+                    <h3>Dependencies</h3>
+                 
+(Content truncated due to size limit. Use line ranges to read in chunks)

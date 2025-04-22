@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gateway - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>API Gateway</h1>
+            <p>Authentication, rate limiting, request routing, and validation for all API requests</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The API Gateway serves as the entry point for all external requests to the RadixInsight platform. It provides a unified interface for clients to interact with various backend services while handling cross-cutting concerns such as authentication, authorization, rate limiting, and request validation.</p>
+                
+                <p>Key responsibilities of the API Gateway include:</p>
+                <ul>
+                    <li>Authentication and authorization of incoming requests</li>
+                    <li>Request validation against defined schemas</li>
+                    <li>Rate limiting to prevent abuse</li>
+                    <li>Request routing to appropriate backend services</li>
+                    <li>Response transformation and normalization</li>
+                    <li>Logging and monitoring of API traffic</li>
+                    <li>API versioning and backward compatibility</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/api-gateway-architecture.png" alt="API Gateway Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EAPI Gateway Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The API Gateway architecture consists of several key components:</p>
+                        <ul>
+                            <li><strong>Request Handler</strong>: Processes incoming HTTP requests</li>
+                            <li><strong>Authentication Module</strong>: Verifies user identity and API keys</li>
+                            <li><strong>Authorization Module</strong>: Checks permissions for requested operations</li>
+                            <li><strong>Rate Limiter</strong>: Controls request frequency per client</li>
+                            <li><strong>Request Validator</strong>: Ensures requests conform to API schemas</li>
+                            <li><strong>Router</strong>: Directs requests to appropriate backend services</li>
+                            <li><strong>Response Transformer</strong>: Formats and normalizes service responses</li>
+                            <li><strong>Logging & Monitoring</strong>: Tracks API usage and performance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>HTTP Requests</strong>: Client requests with headers, path, query parameters, and body</li>
+                            <li><strong>Authentication Credentials</strong>: API keys, tokens, or user credentials</li>
+                            <li><strong>Configuration</strong>: Routing rules, rate limits, and validation schemas</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>HTTP Responses</strong>: Formatted responses from backend services</li>
+                            <li><strong>Error Messages</strong>: Standardized error responses for client issues</li>
+                            <li><strong>Metrics</strong>: Usage statistics and performance data</li>
+                            <li><strong>Logs</strong>: Detailed request and response logs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>API Gateway Configuration (Kong)</h3>
+                    <pre><code class="language-yaml"># Kong API Gateway configuration
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: event-ingestion
+    url: http://event-ingestion-service:8080
+    routes:
+      - name: collect-events
+        paths:
+          - /collect
+        strip_path: true
+        methods:
+          - POST
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - api-key
+      - name: rate-limiting
+        config:
+          minute: 600
+          hour: 10000
+          policy: local
+      - name: request-validator
+        config:
+          body_schema: |
+            {
+              "type": "object",
+              "properties": {
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["event_name", "timestamp"],
+                    "properties": {
+                      "event_name": { "type": "string" },
+                      "timestamp": { "type": "number" },
+                      "properties": { "type": "object" }
+                    }
+                  }
+                }
+              },
+              "required": ["events"]
+            }
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - OPTIONS
+          headers:
+            - Content-Type
+            - Authorization
+            - api-key
+          credentials: true
+          max_age: 3600
+
+  - name: analytics-api
+    url: http://analytics-engine:8080
+    routes:
+      - name: analytics-routes
+        paths:
+          - /analytics
+        strip_path: true
+    plugins:
+      - name: jwt
+        config:
+          claims_to_verify:
+            - exp
+          key_claim_name: kid
+      - name: acl
+        config:
+          allow:
+            - analytics-users
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - Cache-Control: max-age=30
+          remove:
+            headers:
+              - X-Internal-Server
+</code></pre>
+
+                    <h3>Custom Middleware Example (Node.js)</h3>
+                    <pre><code class="language-javascript">// src/middleware/auth.js
+const jwt = require('jsonwebtoken');
+const { UnauthorizedError } = require('../errors');
+const { getUserFromDb } = require('../services/user-service');
+
+/**
+ * Authentication middleware for verifying JWT tokens
+ */
+const authenticate = async (req, res, next) => {
+  try {
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedError('Missing or invalid authorization token');
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (decoded.exp && decoded.exp < now) {
+      throw new UnauthorizedError('Token expired');
+    }
+    
+    // Get user from database
+    const user = await getUserFromDb(decoded.sub);
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+    
+    // Check if token is revoked
+    if (user.tokenRevokedAt && new Date(user.tokenRevokedAt).getTime() / 1000 > decoded.iat) {
+      throw new UnauthorizedError('Token revoked');
+    }
+    
+    // Add user to request object
+    req.user = {
+      id: user.id,
+      email: user.email,
+      roles: user.roles,
+      permissions: user.permissions
+    };
+    
+    next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      next(new UnauthorizedError('Invalid token'));
+    } else {
+      next(error);
+    }
+  }
+};
+
+/**
+ * Authorization middleware for checking permissions
+ */
+const authorize = (requiredPermission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return next(new UnauthorizedError('User not authenticated'));
+    }
+    
+    if (req.user.permissions.includes(requiredPermission) || 
+        req.user.permissions.includes('admin')) {
+      return next();
+    }
+    
+    next(new UnauthorizedError(`Missing required permission: ${requiredPermission}`));
+  };
+};
+
+module.exports = {
+  authenticate,
+  authorize
+};</code></pre>
+
+                    <h3>Rate Limiting Implementation</h3>
+                    <pre><code class="language-javascript">// src/middleware/rate-limiter.js
+const redis = require('redis');
+const { promisify } = require('util');
+const { TooManyRequestsError } = require('../errors');
+
+// Create Redis client
+const client = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD
+});
+
+// Promisify Redis commands
+const incrAsync = promisify(client.incr).bind(client);
+const expireAsync = promisify(client.expire).bind(client);
+const ttlAsync = promisify(client.ttl).bind(client);
+
+/**
+ * Rate limiting middleware
+ * @param {Object} options - Rate limiting options
+ * @param {number} options.limit - Maximum number of requests
+ * @param {number} options.windowMs - Time window in milliseconds
+ * @param {Function} options.keyGenerator - Function to generate rate limit key
+ */
+const rateLimiter = (options = {}) => {
+  const {
+    limit = 100,
+    windowMs = 60 * 1000, // 1 minute
+    keyGenerator = (req) => {
+      // Default key is IP address or API key
+      return req.headers['api-key'] || req.ip;
+    }
+  } = options;
+  
+  const windowSeconds = Math.ceil(windowMs / 1000);
+  
+  return async (req, res, next) => {
+    try {
+      const key = `ratelimit:${keyGenerator(req)}`;
+      
+      // Increment request count
+      const current = await incrAsync(key);
+      
+      // Set expiration if this is the first request
+      if (current === 1) {
+        await expireAsync(key, windowSeconds);
+      }
+      
+      // Get remaining time to live
+      const ttl = await ttlAsync(key);
+      
+      // Set rate limit headers
+      res.setHeader('X-RateLimit-Limit', limit);
+      res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - current));
+      res.setHeader('X-RateLimit-Reset', Math.ceil(Date.now() / 1000) + ttl);
+      
+      // Check if limit is exceeded
+      if (current > limit) {
+        throw new TooManyRequestsError('Rate limit exceeded');
+      }
+      
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
+module.exports = rateLimiter;</code></pre>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>API Integration</h2>
+                <p>The API Gateway exposes the following endpoints for client applications:</p>
+                <ul>
+                    <li><a href="../api/index.html#authentication">POST /auth/token</a> - Generate authentication tokens</li>
+                    <li><a href="../api/index.html#track">POST /collect</a> - Send events to the platform</li>
+                    <li><a href="../api/index.html#analytics">GET /analytics/*</a> - Access analytics data</li>
+                    <li><a href="../api/index.html#management">POST /management/*</a> - Manage platform settings</li>
+                </ul>
+                <p>For complete API documentation, visit the <a href="../api/index.html">RadixInsight API Reference</a>.</p>
+            </div>
+
+            <div class="component-section">
+                <h2>Component Relationships</h2>
+                <div class="component-relationships">
+                    <h3>Dependencies</h3>
+                    <p>The API Gateway depends on the following components:</p>
+                    <ul>
+                        <li>Authentication Service - For user identity verification</li>
+                        <li>Redis Cache - For rate limiting and token storage</li>
+                    </ul>
+
+                    <h3>Consumers</h3>
+                    <p>The API Gateway routes requests to the following components:</p>
+                    <ul>
+                        <li><a href="event-ingestion-service.html">Event Ingestion Service</a> - For event collection</li>
+                        <li><a href="analytics-engine.html">Analytics Engine</a> - For data retrieval</li>
+                        <li>Management Service - For platform configuration</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>RadixInsight</h2>
+                    <p>Event-Based Analytics Platform</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h3>Documentation</h3>
+                        <ul>
+                            <li><a href="../index.html#components">System Components</a></li>
+                            <li><a href="../index.html#data-flow">Data Flow</a></li>
+                            <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                            <li><a href="../index.html#security">Security & Privacy</a></li>
+                            <li><a href="../index.html#milestones">Implementation Milestones</a></li>
+                            <li><a href="../index.html#code">Code Samples</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="../api/index.html">API Documentation</a></li>
+                            <li><a href="../getting-started/index.html">Getting Started</a></li>
+                            <li><a hre
+(Content truncated due to size limit. Use line ranges to read in chunks)

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL Database - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>PostgreSQL Database</h1>
+            <p>Relational database for user metadata, project configuration, and settings</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>PostgreSQL serves as the relational database for the RadixInsight platform, storing critical metadata, user information, project configurations, and system settings. While ClickHouse handles the high-volume event data, PostgreSQL provides reliable storage for structured data that requires ACID compliance, complex relationships, and frequent updates.</p>
+                
+                <p>Key roles of PostgreSQL in the RadixInsight platform include:</p>
+                <ul>
+                    <li>User account management and authentication</li>
+                    <li>Project configuration and settings storage</li>
+                    <li>Dashboard layouts and saved views</li>
+                    <li>Event schema definitions and validation rules</li>
+                    <li>API key management and permissions</li>
+                    <li>Audit logs for system operations</li>
+                    <li>Integration configurations for external systems</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/postgresql-architecture.png" alt="PostgreSQL Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EPostgreSQL Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The PostgreSQL deployment for RadixInsight consists of:</p>
+                        <ul>
+                            <li><strong>Primary Database</strong>: Main PostgreSQL instance for read/write operations</li>
+                            <li><strong>Read Replicas</strong>: Additional instances for scaling read operations</li>
+                            <li><strong>Connection Pooler</strong>: PgBouncer for efficient connection management</li>
+                            <li><strong>Backup System</strong>: Regular snapshots and point-in-time recovery</li>
+                            <li><strong>Monitoring</strong>: Performance and health monitoring tools</li>
+                            <li><strong>Cloud SQL</strong>: Managed PostgreSQL service on GCP</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>User Data</strong>: Account information, preferences, and settings</li>
+                            <li><strong>Project Configurations</strong>: Settings, schemas, and integration details</li>
+                            <li><strong>Dashboard Layouts</strong>: Saved views and visualization configurations</li>
+                            <li><strong>SQL Queries</strong>: CRUD operations from application services</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>Query Results</strong>: Data requested by application services</li>
+                            <li><strong>Transaction Confirmations</strong>: Success/failure status of write operations</li>
+                            <li><strong>Metadata</strong>: Schema information and database statistics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Schema Definition</h3>
+                    <pre><code class="language-sql">-- schema.sql
+-- Core database schema for RadixInsight
+
+-- Users and authentication
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_login_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_admin BOOLEAN DEFAULT FALSE
+);
+
+-- Organizations
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Organization members
+CREATE TABLE organization_members (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL, -- 'owner', 'admin', 'member', 'viewer'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (organization_id, user_id)
+);
+
+-- Projects
+CREATE TABLE projects (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (organization_id, slug)
+);
+
+-- API keys
+CREATE TABLE api_keys (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    key_prefix VARCHAR(8) NOT NULL,
+    key_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Event schemas
+CREATE TABLE event_schemas (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    event_name VARCHAR(255) NOT NULL,
+    schema JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (project_id, event_name)
+);
+
+-- Dashboards
+CREATE TABLE dashboards (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    layout JSONB NOT NULL,
+    is_public BOOLEAN DEFAULT FALSE,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Saved queries
+CREATE TABLE saved_queries (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    query_type VARCHAR(50) NOT NULL, -- 'funnel', 'retention', 'segmentation', 'custom'
+    query_params JSONB NOT NULL,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Audit logs
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    organization_id INTEGER REFERENCES organizations(id),
+    project_id INTEGER REFERENCES projects(id),
+    action VARCHAR(255) NOT NULL,
+    resource_type VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255),
+    metadata JSONB,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_organization_members_user_id ON organization_members(user_id);
+CREATE INDEX idx_organization_members_organization_id ON organization_members(organization_id);
+CREATE INDEX idx_projects_organization_id ON projects(organization_id);
+CREATE INDEX idx_api_keys_project_id ON api_keys(project_id);
+CREATE INDEX idx_event_schemas_project_id ON event_schemas(project_id);
+CREATE INDEX idx_dashboards_project_id ON dashboards(project_id);
+CREATE INDEX idx_saved_queries_project_id ON saved_queries(project_id);
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_project_id ON audit_logs(project_id);
+CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);</code></pre>
+
+                    <h3>Database Client Integration</h3>
+                    <pre><code class="language-python"># app/db/postgres.py
+import asyncio
+import asyncpg
+from typing import Dict, List, Any, Optional
+import logging
+from datetime import datetime
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+class PostgresClient:
+    """
+    Client for interacting with PostgreSQL database
+    """
+    def __init__(self):
+        self.host = settings.POSTGRES_HOST
+        self.port = settings.POSTGRES_PORT
+        self.user = settings.POSTGRES_USER
+        self.password = settings.POSTGRES_PASSWORD
+        self.database = settings.POSTGRES_DATABASE
+        self.pool = None
+        
+    async def connect(self):
+        """
+        Connect to PostgreSQL and create connection pool
+        """
+        if self.pool is not None:
+            return
+            
+        try:
+            self.pool = await asyncpg.create_pool(
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=self.password,
+                database=self.database,
+                min_size=5,
+                max_size=20
+            )
+            
+            logger.info(f"Connected to PostgreSQL at {self.host}:{self.port}")
+        except Exception as e:
+            logger.error(f"Error connecting to PostgreSQL: {str(e)}")
+            raise
+            
+    async def close(self):
+        """
+        Close connection pool
+        """
+        if self.pool is not None:
+            await self.pool.close()
+            self.pool = None
+            logger.info("Closed PostgreSQL connection pool")
+            
+    async def execute(self, query: str, *args, timeout: Optional[float] = None):
+        """
+        Execute a query that doesn't return rows
+        """
+        if self.pool is None:
+            await self.connect()
+            
+        try:
+            return await self.pool.execute(query, *args, timeout=timeout)
+        except Exception as e:
+            logger.error(f"Error executing query: {str(e)}")
+            logger.error(f"Query: {query}")
+            raise
+            
+    async def fetch(self, query: str, *args, timeout: Optional[float] = None) -> List[Dict[str, Any]]:
+        """
+        Execute a query and return all results as dictionaries
+        """
+        if self.pool is None:
+            await self.connect()
+            
+        try:
+            rows = await self.pool.fetch(query, *args, timeout=timeout)
+            return [dict(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error fetching data: {str(e)}")
+            logger.error(f"Query: {query}")
+            raise
+            
+    async def fetchrow(self, query: str, *args, timeout: Optional[float] = None) -> Optional[Dict[str, Any]]:
+        """
+        Execute a query and return the first row as a dictionary
+        """
+        if self.pool is None:
+            await self.connect()
+            
+        try:
+            row = await self.pool.fetchrow(query, *args, timeout=timeout)
+            return dict(row) if row else None
+        except Exception as e:
+            logger.error(f"Error fetching row: {str(e)}")
+            logger.error(f"Query: {query}")
+            raise
+            
+    async def fetchval(self, query: str, *args, column: int = 0, timeout: Optional[float] = None):
+        """
+        Execute a query and return a single value
+        """
+        if self.pool is None:
+            await self.connect()
+            
+        try:
+            return await self.pool.fetchval(query, *args, column=column, timeout=timeout)
+        except Exception as e:
+            logger.error(f"Error fetching value: {str(e)}")
+            logger.error(f"Query: {query}")
+            raise
+            
+    async def transaction(self):
+        """
+        Start a transaction
+        """
+        if self.pool is None:
+            await self.connect()
+            
+        return self.pool.transaction()
+
+# Create singleton instance
+postgres_client = PostgresClient()</code></pre>
+
+                    <h3>User Repository Example</h3>
+                    <pre><code class="language-python"># app/repositories/user_repository.py
+from typing import Dict, List, Any, Optional
+import logging
+from datetime import datetime
+import uuid
+import bcrypt
+
+from app.db.postgres import postgres_client
+from app.models.user import User, UserCreate, UserUpdate
+
+logger = logging.getLogger(__name__)
+
+class UserRepository:
+    """
+    Repository for user-related database operations
+    """
+    async def get_by_id(self, user_id: int) -> Optional[User]:
+        """
+        Get user by ID
+        """
+        query = """
+        SELECT id, email, first_name, last_name, created_at, updated_at, 
+               last_login_at, is_active, is_admin
+        FROM users
+        WHERE id = $1
+        """
+        
+        row = await postgres_client.fetchrow(query, user_id)
+        return User(**row) if row else None
+        
+    async def get_by_email(self, email: str) -> Optional[User]:
+        """
+        Get user by email
+        """
+        query = """
+        SELECT id, email, first_name, last_name, created_at, updated_at, 
+               last_login_at, is_active, is_admin
+        FROM users
+        WHERE email = $1
+        """
+        
+        row = await postgres_client.fetchrow(query, email)
+        return User(**row) if row else None
+        
+    async def create(self, user_da
+(Content truncated due to size limit. Use line ranges to read in chunks)

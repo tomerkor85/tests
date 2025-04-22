@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - RadixInsight</title>
+    <link rel="stylesheet" href="css/modern-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-light">
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a href="index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html#overview">Overview</a></li>
+                    <li><a href="index.html#components">Components</a></li>
+                    <li><a href="index.html#data-flow">Data Flow</a></li>
+                    <li><a href="index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="index.html#security">Security</a></li>
+                    <li><a href="index.html#milestones">Milestones</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-nav-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <section class="p-5">
+        <div class="container">
+            <div class="grid">
+                <div class="col-6 col-sm-12 d-flex justify-content-center align-items-center animate-on-scroll" data-animation="animate-slide-right">
+                    <div class="p-5 d-none d-sm-block">
+                        <img src="images/login-illustration.svg" alt="Login" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23f3f4f6%22%3E%3C%2Frect%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%233b82f6%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3ESecure Analytics Access%3C%2Ftext%3E%3C%2Fsvg%3E';" width="400">
+                    </div>
+                </div>
+                <div class="col-6 col-sm-12 animate-on-scroll" data-animation="animate-slide-left">
+                    <div class="card p-4 shadow">
+                        <div class="card-header text-center">
+                            <h2>Login to RadixInsight</h2>
+                            <p class="text-secondary">Access is restricted to Radix International employees only.</p>
+                        </div>
+                        
+                        <div id="login-error" class="alert alert-danger mt-3 mb-3" style="display: none;"></div>
+                        
+                        <form id="login-form" class="login-form">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" id="email" name="email" class="form-control" placeholder="your.name@radix-int.com" required>
+                                </div>
+                                <small class="form-hint">Must be a valid @radix-int.com email address</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group d-flex justify-content-between align-items-center">
+                                <div class="form-check">
+                                    <input type="checkbox" id="remember" name="remember" class="form-check-input">
+                                    <label for="remember" class="form-check-label">Remember me</label>
+                                </div>
+                                <a href="#" class="text-sm">Forgot password?</a>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                            </div>
+                        </form>
+                        
+                        <div class="card-footer text-center">
+                            <p class="mb-0">Don't have an account? <a href="#">Contact your administrator</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark p-5">
+        <div class="container">
+            <div class="grid mb-5">
+                <div class="col-4 col-sm-12 mb-4">
+                    <h2 class="text-white">RadixInsight</h2>
+                    <p class="text-light">Event-Based Analytics Platform</p>
+                    <p class="text-light">A comprehensive solution for tracking and analyzing user behavior across your applications.</p>
+                </div>
+                <div class="col-8 col-sm-12">
+                    <div class="grid">
+                        <div class="col-4 col-sm-6 col-xs-12 mb-4">
+                            <h4 class="text-white mb-3">Platform</h4>
+                            <ul>
+                                <li><a href="index.html#overview">Overview</a></li>
+                                <li><a href="index.html#components">Components</a></li>
+                                <li><a href="index.html#data-flow">Data Flow</a></li>
+                                <li><a href="index.html#infrastructure">Infrastructure</a></li>
+                                <li><a href="index.html#security">Security</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-4 col-sm-6 col-xs-12 mb-4">
+                            <h4 class="text-white mb-3">Resources</h4>
+                            <ul>
+                                <li><a href="javascript-sdk.html">JavaScript SDK</a></li>
+                                <li><a href="analytics-dashboard.html">Analytics Dashboard</a></li>
+                                <li><a href="api-gateway.html">API Documentation</a></li>
+                                <li><a href="index.html#milestones">Implementation Guide</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-4 col-sm-6 col-xs-12 mb-4">
+                            <h4 class="text-white mb-3">Company</h4>
+                            <ul>
+                                <li><a href="#">About Radix</a></li>
+                                <li><a href="#">Contact Us</a></li>
+                                <li><a href="#">Privacy Policy</a></li>
+                                <li><a href="#">Terms of Service</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-light">
+                <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/modern.js"></script>
+</body>
+</html>

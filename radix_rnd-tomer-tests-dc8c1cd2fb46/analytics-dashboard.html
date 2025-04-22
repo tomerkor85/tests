@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RadixInsight Analytics Dashboard</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/modern-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>RadixInsight</h2>
+        <p>Analytics Platform</p>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link active">
+            <i class="fas fa-chart-line sidebar-menu-icon"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link">
+            <i class="fas fa-project-diagram sidebar-menu-icon"></i>
+            <span>Projects</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link">
+            <i class="fas fa-funnel-dollar sidebar-menu-icon"></i>
+            <span>Funnels</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link">
+            <i class="fas fa-users sidebar-menu-icon"></i>
+            <span>Retention</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link">
+            <i class="fas fa-code sidebar-menu-icon"></i>
+            <span>SDK</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#" class="sidebar-menu-link">
+            <i class="fas fa-cog sidebar-menu-icon"></i>
+            <span>Settings</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Analytics Dashboard</h1>
+        <div class="dashboard-actions">
+          <input type="text" id="date-range" class="form-control date-range-picker" placeholder="Select date range">
+          <button class="btn btn-outline mr-2" data-range="7d">Last 7 days</button>
+          <button class="btn btn-outline mr-2" data-range="30d">Last 30 days</button>
+          <button class="btn btn-outline" data-range="quarter">This Quarter</button>
+          <button class="btn btn-primary refresh-dashboard">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-title">Total Events</div>
+          <div class="stat-value" id="total-events">124,856</div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i> 12.5% from last period
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Active Users</div>
+          <div class="stat-value" id="active-users">8,642</div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i> 8.2% from last period
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Conversion Rate</div>
+          <div class="stat-value" id="conversion-rate">3.8%</div>
+          <div class="stat-change negative">
+            <i class="fas fa-arrow-down"></i> 1.5% from last period
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Avg. Session Duration</div>
+          <div class="stat-value">4m 12s</div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i> 5.3% from last period
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid">
+        <!-- Event Trends Chart -->
+        <div class="col-8">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Event Trends</h3>
+              <div class="chart-actions">
+                <button class="btn btn-sm btn-ghost">
+                  <i class="fas fa-download"></i> Export
+                </button>
+              </div>
+            </div>
+            <div class="chart-canvas-container" style="height: 300px;">
+              <canvas id="event-trends-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Distribution Chart -->
+        <div class="col-4">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Event Distribution</h3>
+              <div class="chart-actions">
+                <button class="btn btn-sm btn-ghost">
+                  <i class="fas fa-download"></i> Export
+                </button>
+              </div>
+            </div>
+            <div class="chart-canvas-container" style="height: 300px;">
+              <canvas id="event-distribution-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversion Funnel -->
+        <div class="col-6">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Conversion Funnel</h3>
+              <div class="chart-actions">
+                <button class="btn btn-sm btn-ghost">
+                  <i class="fas fa-download"></i> Export
+                </button>
+              </div>
+            </div>
+            <div id="conversion-funnel-chart" style="height: 300px;"></div>
+          </div>
+        </div>
+
+        <!-- User Retention -->
+        <div class="col-6">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">User Retention</h3>
+              <div class="chart-actions">
+                <button class="btn btn-sm btn-ghost">
+                  <i class="fas fa-download"></i> Export
+                </button>
+              </div>
+            </div>
+            <div id="user-retention-chart" style="height: 300px; overflow: auto;"></div>
+          </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Events</h3>
+              <button class="btn btn-sm btn-outline">
+                <i class="fas fa-filter"></i> Filter
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table" id="recent-events-table">
+                  <thead>
+                    <tr>
+                      <th>Event ID</th>
+                      <th>Event Type</th>
+                      <th>User ID</th>
+                      <th>Timestamp</th>
+                      <th>Properties</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>e12a45b7</td>
+                      <td>page_view</td>
+                      <td>u7890123</td>
+                      <td>2025-04-21 09:45:12</td>
+                      <td>
+                        <button class="btn btn-sm btn-ghost">
+                          <i class="fas fa-eye"></i> View
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>e23b56c8</td>
+                      <td>button_click</td>
+                      <td>u7890123</td>
+                      <td>2025-04-21 09:45:18</td>
+                      <td>
+                        <button class="btn btn-sm btn-ghost">
+                          <i class="fas fa-eye"></i> View
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>e34c67d9</td>
+                      <td>form_submit</td>
+                      <td>u7890123</td>
+                      <td>2025-04-21 09:46:05</td>
+                      <td>
+                        <button class="btn btn-sm btn-ghost">
+                          <i class="fas fa-eye"></i> View
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>e45d78e0</td>
+                      <td>api_call</td>
+                      <td>u7890123</td>
+                      <td>2025-04-21 09:46:12</td>
+                      <td>
+                        <button class="btn btn-sm btn-ghost">
+                          <i class="fas fa-eye"></i> View
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>e56e89f1</td>
+                      <td>purchase</td>
+                      <td>u7890123</td>
+                      <td>2025-04-21 09:47:30</td>
+                      <td>
+                        <button class="btn btn-sm btn-ghost">
+                          <i class="fas fa-eye"></i> View
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>Showing 5 of 1,245 events</div>
+                <div>
+                  <button class="btn btn-sm btn-outline">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Properties Modal -->
+  <div class="modal" id="propertiesModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Event Properties</h4>
+          <button type="button" class="btn btn-sm btn-ghost" data-dismiss="modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <pre style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--radius); overflow: auto;"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+          <button type="button" class="btn btn-outline" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/analytics-visualizer.js"></script>
+  <script src="js/dashboard-manager.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize dashboard
+      const visualizer = new AnalyticsVisualizer();
+      const dashboard = new DashboardManager(visualizer);
+      
+      // Set project ID (would normally come from URL or user selection)
+      const projectId = 'demo-project-123';
+      
+      // Initialize dashboard with project ID
+      dashboard.initialize(projectId);
+      
+      // Set up modal close functionality
+      document.querySelectorAll('[data-dismiss="modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+          const modal = this.closest('.modal');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        });
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+          event.target.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

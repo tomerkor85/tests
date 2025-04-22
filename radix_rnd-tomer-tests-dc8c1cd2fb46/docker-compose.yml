@@ -1,0 +1,90 @@
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:14
+    container_name: radix-postgres
+    environment:
+      POSTGRES_DB: radixinsight
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "Qw1212Qw!@#"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - radix-network
+    restart: unless-stopped
+
+  # ClickHouse
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: radix-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - radix-network
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:6
+    container_name: radix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - radix-network
+    restart: unless-stopped
+
+  # Node.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: radix-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=radixinsight
+      - DB_USER=postgres
+      - DB_PASSWORD=Qw1212Qw!@#
+      - CH_HOST=clickhouse
+      - CH_PORT=8123
+      - CH_DATABASE=radixinsight
+      - CH_USER=default
+      - CH_PASSWORD=
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
+      - JWT_EXPIRES_IN=24h
+      - EMAIL_HOST=smtp.outlook.com
+      - EMAIL_PORT=587
+      - EMAIL_SECURE=false
+      - EMAIL_USER=radix-automation-2024@outlook.com
+      - EMAIL_PASSWORD=8@200Ka!
+      - EMAIL_FROM=RadixInsight <radix-automation-2024@outlook.com>
+      - FRONTEND_URL=http://localhost:3000
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - postgres
+      - clickhouse
+      - redis
+    networks:
+      - radix-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  redis_data:
+
+networks:
+  radix-network:
+    driver: bridge 

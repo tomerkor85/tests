@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Engine - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Analytics Engine</h1>
+            <p>Translates dashboard requests into optimized database queries</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Analytics Engine is the computational core of the RadixInsight platform, responsible for translating high-level analytics requests from the dashboard into optimized database queries. It provides a powerful abstraction layer that enables complex analytics operations without requiring users to write SQL or understand the underlying data structure.</p>
+                
+                <p>Key capabilities of the Analytics Engine include:</p>
+                <ul>
+                    <li>Query generation and optimization for ClickHouse</li>
+                    <li>Support for various analytics operations (segmentation, funnels, retention, etc.)</li>
+                    <li>Intelligent caching of query results</li>
+                    <li>Query execution and result formatting</li>
+                    <li>Performance monitoring and query optimization</li>
+                    <li>Data access control and permission enforcement</li>
+                    <li>Result pagination and streaming for large datasets</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/analytics-engine-architecture.png" alt="Analytics Engine Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EAnalytics Engine Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The Analytics Engine architecture consists of several key components:</p>
+                        <ul>
+                            <li><strong>Query Parser</strong>: Interprets analytics requests from the dashboard</li>
+                            <li><strong>Query Builder</strong>: Constructs optimized SQL queries for ClickHouse</li>
+                            <li><strong>Query Optimizer</strong>: Applies performance optimizations to generated queries</li>
+                            <li><strong>Execution Engine</strong>: Manages query execution and result processing</li>
+                            <li><strong>Cache Manager</strong>: Handles caching of query results for improved performance</li>
+                            <li><strong>Access Control</strong>: Enforces data access permissions</li>
+                            <li><strong>Result Formatter</strong>: Transforms query results into dashboard-friendly format</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>Analytics Requests</strong>: JSON-formatted query specifications from the dashboard</li>
+                            <li><strong>User Context</strong>: User identity and permissions information</li>
+                            <li><strong>Query Parameters</strong>: Time ranges, filters, grouping options, etc.</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>Query Results</strong>: Formatted data for dashboard visualization</li>
+                            <li><strong>Metadata</strong>: Query execution time, row count, and other statistics</li>
+                            <li><strong>Error Information</strong>: Detailed error messages for failed queries</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Query Builder Implementation</h3>
+                    <pre><code class="language-python"># app/query/builder.py
+from typing import Dict, Any, List, Optional
+import logging
+from datetime import datetime, timedelta
+
+from app.models import QueryRequest, TimeRange, Filter, GroupBy
+from app.utils import format_clickhouse_date, validate_table_name, validate_column_name
+
+logger = logging.getLogger(__name__)
+
+class QueryBuilder:
+    """
+    Builds optimized ClickHouse SQL queries from analytics requests
+    """
+    def __init__(self, request: QueryRequest):
+        self.request = request
+        self.table_name = validate_table_name(request.table_name)
+        self.project_id = request.project_id
+        self.time_range = request.time_range
+        self.filters = request.filters or []
+        self.group_by = request.group_by or []
+        self.limit = min(request.limit or 1000, 10000)  # Cap at 10,000 rows
+        self.offset = request.offset or 0
+        
+    def build_query(self) -> str:
+        """
+        Build the complete SQL query
+        """
+        # Start with SELECT clause
+        query = self._build_select_clause()
+        
+        # Add FROM clause
+        query += f"\nFROM {self.table_name}"
+        
+        # Add WHERE clause
+        where_clause = self._build_where_clause()
+        if where_clause:
+            query += f"\nWHERE {where_clause}"
+            
+        # Add GROUP BY clause
+        group_by_clause = self._build_group_by_clause()
+        if group_by_clause:
+            query += f"\nGROUP BY {group_by_clause}"
+            
+        # Add ORDER BY clause
+        order_by_clause = self._build_order_by_clause()
+        if order_by_clause:
+            query += f"\nORDER BY {order_by_clause}"
+            
+        # Add LIMIT and OFFSET
+        query += f"\nLIMIT {self.limit}"
+        if self.offset > 0:
+            query += f" OFFSET {self.offset}"
+            
+        logger.debug(f"Built query: {query}")
+        return query
+        
+    def _build_select_clause(self) -> str:
+        """
+        Build the SELECT clause
+        """
+        select_items = []
+        
+        # Add group by columns
+        for group in self.group_by:
+            column_name = validate_column_name(group.column)
+            
+            # Handle special cases
+            if group.type == "time_bucket":
+                interval = group.interval or "day"
+                select_items.append(f"toStartOf{interval.capitalize()}(timestamp) AS {column_name}_{interval}")
+            elif group.type == "extract":
+                select_items.append(f"{group.function}({column_name}) AS {column_name}_{group.function}")
+            else:
+                select_items.append(column_name)
+                
+        # Add metrics
+        for metric in self.request.metrics:
+            metric_type = metric.type.lower()
+            column_name = validate_column_name(metric.column)
+            
+            if metric_type == "count":
+                select_items.append("count() AS event_count")
+            elif metric_type == "count_distinct":
+                select_items.append(f"count(DISTINCT {column_name}) AS distinct_{column_name}")
+            elif metric_type == "sum":
+                select_items.append(f"sum({column_name}) AS sum_{column_name}")
+            elif metric_type == "avg":
+                select_items.append(f"avg({column_name}) AS avg_{column_name}")
+            elif metric_type == "min":
+                select_items.append(f"min({column_name}) AS min_{column_name}")
+            elif metric_type == "max":
+                select_items.append(f"max({column_name}) AS max_{column_name}")
+                
+        # If no items, use count
+        if not select_items:
+            select_items.append("count() AS event_count")
+            
+        return "SELECT " + ", ".join(select_items)
+        
+    def _build_where_clause(self) -> str:
+        """
+        Build the WHERE clause
+        """
+        conditions = []
+        
+        # Add project ID filter
+        conditions.append(f"project_id = '{self.project_id}'")
+        
+        # Add time range filter
+        if self.time_range:
+            start_date = format_clickhouse_date(self.time_range.start_date)
+            end_date = format_clickhouse_date(self.time_range.end_date)
+            conditions.append(f"timestamp >= toDateTime('{start_date}')")
+            conditions.append(f"timestamp < toDateTime('{end_date}')")
+            
+        # Add custom filters
+        for filter_item in self.filters:
+            column_name = validate_column_name(filter_item.column)
+            operator = filter_item.operator.lower()
+            
+            if operator == "eq":
+                conditions.append(f"{column_name} = '{filter_item.value}'")
+            elif operator == "neq":
+                conditions.append(f"{column_name} != '{filter_item.value}'")
+            elif operator == "contains":
+                conditions.append(f"position({column_name}, '{filter_item.value}') > 0")
+            elif operator == "in":
+                values = ", ".join([f"'{v}'" for v in filter_item.value])
+                conditions.append(f"{column_name} IN ({values})")
+            elif operator == "gt":
+                conditions.append(f"{column_name} > {filter_item.value}")
+            elif operator == "lt":
+                conditions.append(f"{column_name} < {filter_item.value}")
+            elif operator == "gte":
+                conditions.append(f"{column_name} >= {filter_item.value}")
+            elif operator == "lte":
+                conditions.append(f"{column_name} <= {filter_item.value}")
+                
+        return " AND ".join(conditions)
+        
+    def _build_group_by_clause(self) -> str:
+        """
+        Build the GROUP BY clause
+        """
+        if not self.group_by:
+            return ""
+            
+        group_items = []
+        
+        for group in self.group_by:
+            column_name = validate_column_name(group.column)
+            
+            # Handle special cases
+            if group.type == "time_bucket":
+                interval = group.interval or "day"
+                group_items.append(f"toStartOf{interval.capitalize()}(timestamp)")
+            elif group.type == "extract":
+                group_items.append(f"{group.function}({column_name})")
+            else:
+                group_items.append(column_name)
+                
+        return ", ".join(group_items)
+        
+    def _build_order_by_clause(self) -> str:
+        """
+        Build the ORDER BY clause
+        """
+        if not self.request.order_by:
+            # Default to timestamp desc if no order specified
+            return "timestamp DESC"
+            
+        order_items = []
+        
+        for order in self.request.order_by:
+            column_name = validate_column_name(order.column)
+            direction = "DESC" if order.direction.lower() == "desc" else "ASC"
+            order_items.append(f"{column_name} {direction}")
+            
+        return ", ".join(order_items)</code></pre>
+
+                    <h3>Funnel Analysis Implementation</h3>
+                    <pre><code class="language-python"># app/analytics/funnel.py
+from typing import Dict, Any, List, Optional
+import logging
+from datetime import datetime, timedelta
+
+from app.models import FunnelRequest, FunnelStep
+from app.query.builder import QueryBuilder
+from app.db import clickhouse_client
+
+logger = logging.getLogger(__name__)
+
+class FunnelAnalysis:
+    """
+    Implements funnel analysis for tracking user conversion through a sequence of events
+    """
+    def __init__(self, request: FunnelRequest):
+        self.request = request
+        self.project_id = request.project_id
+        self.steps = request.steps
+        self.time_range = request.time_range
+        self.user_id_column = request.user_id_column or "user_id"
+        self.conversion_window = request.conversion_window or 30  # days
+        
+    async def analyze(self) -> Dict[str, Any]:
+        """
+        Perform funnel analysis and return results
+        """
+        if not self.steps or len(self.steps) < 2:
+            raise ValueError("Funnel analysis requires at least 2 steps")
+            
+        # Build and execute query
+        query = self._build_funnel_query()
+        results = await clickhouse_client.execute_query(query)
+        
+        # Process results
+        return self._process_results(results)
+        
+    def _build_funnel_query(self) -> str:
+        """
+        Build ClickHouse funnel query using the funnel function
+        """
+        # Prepare step conditions
+        step_conditions = []
+        
+        for i, step in enumerate(self.steps):
+            condition = f"event_name = '{step.event_name}'"
+            
+            # Add property filters if specified
+            if step.properties:
+                for prop_name, prop_value in step.properties.items():
+                    condition += f" AND JSONExtractString(properties, '{prop_name}') = '{prop_value}'"
+                    
+            step_conditions.append(condition)
+            
+        # Build the funnel query
+        query = f"""
+        SELECT
+            level,
+            count() as count,
+            round(count() / first_value(count()) OVER (ORDER BY level) * 100, 2) as conversion_rate
+        FROM (
+            SELECT
+                {self.user_id_column},
+                max(level) as level
+            FROM (
+                SELECT
+                    {self.user_id_column},
+                    timestamp,
+                    multiIf(
+                        {', '.join([f'{cond}, {i+1}' for i, cond in enumerate(step_conditions)])},
+                        0
+                    ) as level
+                FROM events
+                WHERE
+                    project_id = '{self.project_id}'
+                    AND timestamp >= toDateTime('{self.time_range
+(Content truncated due to size limit. Use line ranges to read in chunks)

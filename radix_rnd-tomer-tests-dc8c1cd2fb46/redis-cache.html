@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Cache - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Redis Cache</h1>
+            <p>In-memory data store for session management and query caching</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>Redis serves as a high-performance in-memory data store for the RadixInsight platform, providing critical caching, session management, and temporary data storage capabilities. Its exceptional speed and versatility make it ideal for improving application performance and handling real-time operations that require low latency.</p>
+                
+                <p>Key roles of Redis in the RadixInsight platform include:</p>
+                <ul>
+                    <li>User session management and authentication token storage</li>
+                    <li>Query result caching for improved analytics performance</li>
+                    <li>Rate limiting and request throttling</li>
+                    <li>Real-time metrics and counters</li>
+                    <li>Message broker for event streams (alternative to Kafka)</li>
+                    <li>Distributed locks for coordinating operations</li>
+                    <li>Temporary data storage for in-progress operations</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/redis-architecture.png" alt="Redis Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3ERedis Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The Redis deployment for RadixInsight consists of:</p>
+                        <ul>
+                            <li><strong>Redis Cluster</strong>: Multiple Redis nodes for scalability and high availability</li>
+                            <li><strong>Sentinel</strong>: Monitoring and automatic failover management</li>
+                            <li><strong>Client-side Sharding</strong>: Distribution of data across multiple Redis instances</li>
+                            <li><strong>Persistence</strong>: RDB snapshots and AOF logs for data durability</li>
+                            <li><strong>Memory Management</strong>: Configured eviction policies for optimal resource usage</li>
+                            <li><strong>Monitoring</strong>: Performance and health monitoring tools</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>Cache Operations</strong>: Set, get, delete, and other Redis commands</li>
+                            <li><strong>Session Data</strong>: User authentication and session information</li>
+                            <li><strong>Query Results</strong>: Analytics query results for caching</li>
+                            <li><strong>Stream Messages</strong>: Event data for real-time processing</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>Cached Data</strong>: Retrieved values from cache</li>
+                            <li><strong>Operation Results</strong>: Success/failure status of Redis operations</li>
+                            <li><strong>Stream Data</strong>: Consumed messages from Redis Streams</li>
+                            <li><strong>Metrics</strong>: Performance statistics and usage information</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Redis Client Integration</h3>
+                    <pre><code class="language-python"># app/cache/redis_client.py
+import asyncio
+import aioredis
+from typing import Any, Optional, List, Dict, Union
+import json
+import logging
+from datetime import timedelta
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+class RedisClient:
+    """
+    Client for interacting with Redis
+    """
+    def __init__(self):
+        self.redis_url = settings.REDIS_URL
+        self.client = None
+        
+    async def connect(self):
+        """
+        Connect to Redis
+        """
+        if self.client is not None:
+            return
+            
+        try:
+            self.client = await aioredis.from_url(
+                self.redis_url,
+                encoding="utf-8",
+                decode_responses=True
+            )
+            
+            logger.info(f"Connected to Redis at {self.redis_url}")
+        except Exception as e:
+            logger.error(f"Error connecting to Redis: {str(e)}")
+            raise
+            
+    async def close(self):
+        """
+        Close Redis connection
+        """
+        if self.client is not None:
+            await self.client.close()
+            self.client = None
+            logger.info("Closed Redis connection")
+            
+    async def get(self, key: str) -> Any:
+        """
+        Get a value from Redis
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            value = await self.client.get(key)
+            
+            # Try to parse as JSON if it looks like JSON
+            if value and (value.startswith('{') or value.startswith('[')):
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+                    
+            return value
+        except Exception as e:
+            logger.error(f"Error getting key {key}: {str(e)}")
+            return None
+            
+    async def set(self, key: str, value: Any, expire: Optional[int] = None) -> bool:
+        """
+        Set a value in Redis with optional expiration in seconds
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            # Convert dict/list to JSON string
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value)
+                
+            if expire is not None:
+                return await self.client.set(key, value, ex=expire)
+            else:
+                return await self.client.set(key, value)
+        except Exception as e:
+            logger.error(f"Error setting key {key}: {str(e)}")
+            return False
+            
+    async def delete(self, key: str) -> int:
+        """
+        Delete a key from Redis
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            return await self.client.delete(key)
+        except Exception as e:
+            logger.error(f"Error deleting key {key}: {str(e)}")
+            return 0
+            
+    async def exists(self, key: str) -> bool:
+        """
+        Check if a key exists in Redis
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            return await self.client.exists(key) > 0
+        except Exception as e:
+            logger.error(f"Error checking key {key}: {str(e)}")
+            return False
+            
+    async def expire(self, key: str, seconds: int) -> bool:
+        """
+        Set expiration time for a key
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            return await self.client.expire(key, seconds)
+        except Exception as e:
+            logger.error(f"Error setting expiration for key {key}: {str(e)}")
+            return False
+            
+    async def incr(self, key: str, amount: int = 1) -> int:
+        """
+        Increment a key by the given amount
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            return await self.client.incrby(key, amount)
+        except Exception as e:
+            logger.error(f"Error incrementing key {key}: {str(e)}")
+            return 0
+            
+    async def hget(self, key: str, field: str) -> Any:
+        """
+        Get a field from a hash
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            value = await self.client.hget(key, field)
+            
+            # Try to parse as JSON if it looks like JSON
+            if value and (value.startswith('{') or value.startswith('[')):
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+                    
+            return value
+        except Exception as e:
+            logger.error(f"Error getting hash field {key}.{field}: {str(e)}")
+            return None
+            
+    async def hset(self, key: str, field: str, value: Any) -> int:
+        """
+        Set a field in a hash
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            # Convert dict/list to JSON string
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value)
+                
+            return await self.client.hset(key, field, value)
+        except Exception as e:
+            logger.error(f"Error setting hash field {key}.{field}: {str(e)}")
+            return 0
+            
+    async def hdel(self, key: str, field: str) -> int:
+        """
+        Delete a field from a hash
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            return await self.client.hdel(key, field)
+        except Exception as e:
+            logger.error(f"Error deleting hash field {key}.{field}: {str(e)}")
+            return 0
+            
+    async def hgetall(self, key: str) -> Dict[str, Any]:
+        """
+        Get all fields and values from a hash
+        """
+        if self.client is None:
+            await self.connect()
+            
+        try:
+            result = await self.client.hgetall(key)
+            
+            # Try to parse values as JSON if they look like JSON
+            for field, value in result.items():
+                if value and (value.startswith('{') or value.startswith('[')):
+                    try:
+                        result[field] = json.loads(value)
+                    except json.JSONDecodeError:
+                        pass
+                        
+            return result
+        except Exception as e:
+            logger.error(f"Error getting all hash fields for {key}: {str(e)}")
+            return {}
+
+# Create singleton instance
+redis_client = RedisClient()</code></pre>
+
+                    <h3>Query Cache Implementation</h3>
+                    <pre><code class="language-python"># app/cache/query_cache.py
+from typing import Dict, Any, Optional
+import logging
+import hashlib
+import json
+from datetime import datetime
+
+from app.cache.redis_client import redis_client
+
+logger = logging.getLogger(__name__)
+
+class QueryCache:
+    """
+    Cache for analytics query results
+    """
+    def __init__(self, ttl_seconds: int = 300):
+        self.ttl_seconds = ttl_seconds
+        self.prefix = "query_cache:"
+        
+    def _generate_cache_key(self, query_type: str, params: Dict[str, Any]) -> str:
+        """
+        Generate a cache key based on query type and parameters
+        """
+        # Sort parameters to ensure consistent key generation
+        sorted_params = json.dumps(params, sort_keys=True)
+        
+        # Create hash of parameters
+        params_hash = hashlib.md5(sorted_params.encode()).hexdigest()
+        
+        return f"{self.prefix}{query_type}:{params_hash}"
+        
+    async def get(self, query_type: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Get cached query results
+        """
+        cache_key = self._generate_cache_key(query_type, params)
+        
+        try:
+            cached_data = await redis_client.get(cache_key)
+            
+            if cached_data:
+                logger.debug(f"Cache hit for {query_type} query")
+                return cached_data
+            else:
+                logger.debug(f"Cache miss for {query_type} query")
+                return None
+        except Exception as e:
+            logger.error(f"Error retrieving from cache: {str(e)}")
+            return None
+            
+    async def set(self, query_type: str, params: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        """
+        Cache query results
+        """
+        cache_key = self._generate_cache_key(query_type, params)
+        
+        try:
+            # Add timestamp to cached data
+            result_with_meta = {
+                "data": result,
+                "cached_at": datetime.now().isoformat()
+            }
+            
+            success = await redis_client.set(cache_key, result_with_meta, expire=self.ttl_seconds)
+            
+            if success:
+                logger.debug(f"Cached {query_type} query result for {self.ttl_seconds} seconds")
+            else:
+                logger.warning(f"Failed to cache {query_type} query result")
+                
+            return success
+        except Exception as e:
+            logger.error(f"Error caching query result: {str(e)}")
+            return False
+            
+    async def invalidate(self, query_type: str, params: Dict[str, Any]) -> bool:
+        """
+        Invalidate cached query results
+        """
+        cache_key = self._generate_cache_key(query_type, params)
+        
+        try:
+            deleted = await redis_client.delete(cache_key)
+            
+            if deleted:
+                logger.debug(f"Invalidated cache for {query_type} query")
+ 
+(Content truncated due to size limit. Use line ranges to read in chunks)

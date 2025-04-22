@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript SDK - RadixInsight</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html#overview">Overview</a></li>
+                    <li><a href="../index.html#components">Components</a></li>
+                    <li><a href="../index.html#data-flow">Data Flow</a></li>
+                    <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                    <li><a href="../index.html#security">Security</a></li>
+                    <li><a href="../index.html#milestones">Milestones</a></li>
+                    <li><a href="../index.html#code">Code Samples</a></li>
+                    <li><a href="../getting-started/index.html">Getting Started</a></li>
+                    <li><a href="../api/index.html">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>JavaScript SDK</h1>
+            <p>Lightweight client-side library for tracking events with queue management and session tracking</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The RadixInsight JavaScript SDK is a lightweight client-side library that enables seamless event tracking in web applications. It provides developers with simple APIs to capture user interactions and send them to the RadixInsight platform for analysis.</p>
+                
+                <p>Key features of the JavaScript SDK include:</p>
+                <ul>
+                    <li>Automatic session management and user identification</li>
+                    <li>Event batching and queue management for optimal network usage</li>
+                    <li>Offline support with local storage persistence</li>
+                    <li>Automatic retry mechanism for failed network requests</li>
+                    <li>Customizable event properties and metadata</li>
+                    <li>Minimal footprint (less than 10KB gzipped)</li>
+                </ul>
+            </div>
+
+            <div class="component-section">
+                <h2>Architecture Diagram</h2>
+                <div class="architecture-diagram">
+                    <img src="../images/javascript-sdk-architecture.png" alt="JavaScript SDK Architecture" onerror="this.onerror=null; this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22800%22 height%3D%22400%22 viewBox%3D%220 0 800 400%22%3E%3Crect width%3D%22800%22 height%3D%22400%22 fill%3D%22%23f8f9fa%22%3E%3C%2Frect%3E%3Ctext x%3D%22400%22 y%3D%22200%22 font-family%3D%22Arial%2C sans-serif%22 font-size%3D%2224px%22 fill%3D%22%236c757d%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EJavaScript SDK Architecture%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <div class="diagram-caption">
+                        <p>The JavaScript SDK architecture consists of several key components:</p>
+                        <ul>
+                            <li><strong>Event Collector</strong>: Captures and validates user interactions</li>
+                            <li><strong>Event Queue</strong>: Manages batching and persistence of events</li>
+                            <li><strong>Session Manager</strong>: Handles user session tracking and identification</li>
+                            <li><strong>Network Layer</strong>: Manages communication with the RadixInsight API</li>
+                            <li><strong>Storage Manager</strong>: Provides persistence for offline operation</li>
+                            <li><strong>Configuration Manager</strong>: Handles SDK initialization and settings</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Input/Output Specifications</h2>
+                <div class="io-specs">
+                    <div class="input-specs">
+                        <h3>Inputs</h3>
+                        <ul>
+                            <li><strong>Configuration</strong>: API key, endpoint URL, batch size, etc.</li>
+                            <li><strong>Event Data</strong>: Event name, properties, and timestamp</li>
+                            <li><strong>User Identification</strong>: User ID or anonymous ID</li>
+                            <li><strong>Context Information</strong>: Browser, device, and network details</li>
+                        </ul>
+                    </div>
+                    <div class="output-specs">
+                        <h3>Outputs</h3>
+                        <ul>
+                            <li><strong>API Requests</strong>: Batched events sent to the RadixInsight API</li>
+                            <li><strong>Local Storage</strong>: Persisted events for offline operation</li>
+                            <li><strong>Debug Information</strong>: Logging and error reporting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>Code Examples</h2>
+                <div class="code-examples">
+                    <h3>Basic SDK Integration</h3>
+                    <pre><code class="language-html">&lt;!-- Include the RadixInsight SDK --&gt;
+&lt;script src="https://cdn.radixinsight.company.com/sdk/v1/radixinsight.min.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  // Initialize the SDK
+  RadixInsight.init({
+    apiKey: 'YOUR_API_KEY',
+    endpoint: 'https://api.radixinsight.company.com/collect',
+    batchSize: 10,
+    batchInterval: 5000 // milliseconds
+  });
+  
+  // Identify the user (if known)
+  RadixInsight.identify('user-123', {
+    email: 'user@example.com',
+    name: 'John Doe',
+    plan: 'premium'
+  });
+  
+  // Track an event
+  RadixInsight.track('Button Clicked', {
+    buttonId: 'signup-button',
+    page: '/landing',
+    referrer: document.referrer
+  });
+&lt;/script&gt;</code></pre>
+
+                    <h3>Advanced Usage</h3>
+                    <pre><code class="language-javascript">// Configure SDK with advanced options
+RadixInsight.init({
+  apiKey: 'YOUR_API_KEY',
+  endpoint: 'https://api.radixinsight.company.com/collect',
+  batchSize: 20,
+  batchInterval: 10000,
+  maxRetries: 3,
+  retryInterval: 3000,
+  debug: true,
+  persistenceMode: 'localStorage',
+  maxQueueSize: 100,
+  autoTrack: {
+    pageViews: true,
+    clicks: true,
+    forms: true
+  },
+  context: {
+    app: {
+      name: 'My Web App',
+      version: '1.2.3'
+    }
+  }
+});
+
+// Track page view with custom properties
+RadixInsight.pageView({
+  title: document.title,
+  url: window.location.href,
+  referrer: document.referrer,
+  loadTime: performance.now()
+});
+
+// Track form submission
+const form = document.getElementById('signup-form');
+form.addEventListener('submit', function(event) {
+  // Prevent default form submission
+  event.preventDefault();
+  
+  // Get form data
+  const formData = new FormData(form);
+  const formValues = {};
+  
+  for (let [key, value] of formData.entries()) {
+    formValues[key] = value;
+  }
+  
+  // Track the event
+  RadixInsight.track('Form Submitted', {
+    formId: form.id,
+    formValues: formValues
+  });
+  
+  // Continue with form submission
+  setTimeout(() => {
+    form.submit();
+  }, 300);
+});</code></pre>
+
+                    <h3>Ecommerce Tracking Example</h3>
+                    <pre><code class="language-javascript">// Track product view
+RadixInsight.track('Product Viewed', {
+  productId: '12345',
+  productName: 'Wireless Headphones',
+  price: 99.99,
+  currency: 'USD',
+  category: 'Electronics',
+  brand: 'AudioTech'
+});
+
+// Track add to cart
+RadixInsight.track('Product Added', {
+  productId: '12345',
+  productName: 'Wireless Headphones',
+  price: 99.99,
+  currency: 'USD',
+  quantity: 1,
+  cartId: 'cart-789'
+});
+
+// Track checkout
+RadixInsight.track('Checkout Started', {
+  cartId: 'cart-789',
+  items: [
+    {
+      productId: '12345',
+      productName: 'Wireless Headphones',
+      price: 99.99,
+      quantity: 1
+    }
+  ],
+  total: 99.99,
+  currency: 'USD',
+  paymentMethod: 'credit_card'
+});
+
+// Track purchase
+RadixInsight.track('Order Completed', {
+  orderId: 'order-456',
+  cartId: 'cart-789',
+  items: [
+    {
+      productId: '12345',
+      productName: 'Wireless Headphones',
+      price: 99.99,
+      quantity: 1
+    }
+  ],
+  total: 99.99,
+  tax: 8.99,
+  shipping: 5.99,
+  currency: 'USD',
+  paymentMethod: 'credit_card'
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <h2>API Integration</h2>
+                <p>The JavaScript SDK communicates with the RadixInsight backend through the following API endpoints:</p>
+                <ul>
+                    <li><a href="../api/index.html#track">POST /collect</a> - Send batched events to the platform</li>
+                    <li><a href="../api/index.html#identify">POST /identify</a> - Update user profile information</li>
+                    <li><a href="../api/index.html#config">GET /config</a> - Retrieve dynamic configuration</li>
+                </ul>
+                <p>For complete API documentation, visit the <a href="../api/index.html">RadixInsight API Reference</a>.</p>
+            </div>
+
+            <div class="component-section">
+                <h2>Component Relationships</h2>
+                <div class="component-relationships">
+                    <h3>Dependencies</h3>
+                    <p>The JavaScript SDK depends on the following components:</p>
+                    <ul>
+                        <li><a href="api-gateway.html">API Gateway</a> - Receives and validates event data</li>
+                        <li><a href="event-ingestion-service.html">Event Ingestion Service</a> - Processes incoming events</li>
+                    </ul>
+
+                    <h3>Consumers</h3>
+                    <p>The following components consume or interact with data from the JavaScript SDK:</p>
+                    <ul>
+                        <li><a href="event-consumer-service.html">Event Consumer Service</a> - Processes events for storage</li>
+                        <li><a href="analytics-engine.html">Analytics Engine</a> - Analyzes event data</li>
+                        <li><a href="analytics-dashboard.html">Analytics Dashboard</a> - Visualizes event data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>RadixInsight</h2>
+                    <p>Event-Based Analytics Platform</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h3>Documentation</h3>
+                        <ul>
+                            <li><a href="../index.html#components">System Components</a></li>
+                            <li><a href="../index.html#data-flow">Data Flow</a></li>
+                            <li><a href="../index.html#infrastructure">Infrastructure</a></li>
+                            <li><a href="../index.html#security">Security & Privacy</a></li>
+                            <li><a href="../index.html#milestones">Implementation Milestones</a></li>
+                            <li><a href="../index.html#code">Code Samples</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="../api/index.html">API Documentation</a></li>
+                            <li><a href="../getting-started/index.html">Getting Started</a></li>
+                            <li><a href="javascript-sdk.html">SDK Reference</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/prism.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

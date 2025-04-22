@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="30" font-size="24" font-weight="bold" text-anchor="middle" fill="#1f2937">Analytics Dashboard Architecture</text>
+  
+  <!-- User Interface Layer -->
+  <rect x="100" y="80" width="600" height="80" rx="5" ry="5" fill="#3b82f6" stroke="#2563eb" stroke-width="2"/>
+  <text x="400" y="110" font-size="18" font-weight="bold" text-anchor="middle" fill="white">User Interface Layer</text>
+  <text x="400" y="140" font-size="14" text-anchor="middle" fill="white">React Components, Redux State Management, Visualization Library</text>
+  
+  <!-- Core Modules -->
+  <rect x="100" y="200" width="180" height="70" rx="5" ry="5" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+  <text x="190" y="230" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Dashboard Layout</text>
+  <text x="190" y="250" font-size="14" text-anchor="middle" fill="white">Grid-based Layout System</text>
+  
+  <rect x="310" y="200" width="180" height="70" rx="5" ry="5" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+  <text x="400" y="230" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Query Builder</text>
+  <text x="400" y="250" font-size="14" text-anchor="middle" fill="white">Visual Query Interface</text>
+  
+  <rect x="520" y="200" width="180" height="70" rx="5" ry="5" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+  <text x="610" y="230" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Saved Views</text>
+  <text x="610" y="250" font-size="14" text-anchor="middle" fill="white">Dashboard Configuration</text>
+  
+  <!-- Visualization Components -->
+  <rect x="50" y="310" width="130" height="60" rx="5" ry="5" fill="#10b981" stroke="#059669" stroke-width="2"/>
+  <text x="115" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Charts</text>
+  <text x="115" y="355" font-size="12" text-anchor="middle" fill="white">Line, Bar, Area</text>
+  
+  <rect x="200" y="310" width="130" height="60" rx="5" ry="5" fill="#10b981" stroke="#059669" stroke-width="2"/>
+  <text x="265" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Tables</text>
+  <text x="265" y="355" font-size="12" text-anchor="middle" fill="white">Data Tables</text>
+  
+  <rect x="350" y="310" width="130" height="60" rx="5" ry="5" fill="#10b981" stroke="#059669" stroke-width="2"/>
+  <text x="415" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Funnels</text>
+  <text x="415" y="355" font-size="12" text-anchor="middle" fill="white">Conversion Funnels</text>
+  
+  <rect x="500" y="310" width="130" height="60" rx="5" ry="5" fill="#10b981" stroke="#059669" stroke-width="2"/>
+  <text x="565" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Heatmaps</text>
+  <text x="565" y="355" font-size="12" text-anchor="middle" fill="white">User Activity</text>
+  
+  <rect x="650" y="310" width="130" height="60" rx="5" ry="5" fill="#10b981" stroke="#059669" stroke-width="2"/>
+  <text x="715" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Cohorts</text>
+  <text x="715" y="355" font-size="12" text-anchor="middle" fill="white">Retention Analysis</text>
+  
+  <!-- API Layer -->
+  <rect x="100" y="410" width="600" height="60" rx="5" ry="5" fill="#ef4444" stroke="#dc2626" stroke-width="2"/>
+  <text x="400" y="440" font-size="16" font-weight="bold" text-anchor="middle" fill="white">API Layer</text>
+  <text x="400" y="455" font-size="14" text-anchor="middle" fill="white">Analytics Engine API Client, Authentication, Data Fetching</text>
+  
+  <!-- Connections -->
+  <!-- UI to Modules -->
+  <path d="M 190 160 L 190 200" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 400 160 L 400 200" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 610 160 L 610 200" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Modules to Visualization -->
+  <path d="M 190 270 L 115 310" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 190 270 L 265 310" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 400 270 L 415 310" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 610 270 L 565 310" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 610 270 L 715 310" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Visualization to API -->
+  <path d="M 115 370 L 250 410" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 265 370 L 300 410" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 415 370 L 400 410" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 565 370 L 500 410" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 715 370 L 550 410" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Legend -->
+  <rect x="20" y="20" width="20" height="20" fill="#3b82f6" stroke="#2563eb" stroke-width="1"/>
+  <text x="45" y="35" font-size="14" fill="#1f2937" dominant-baseline="middle">UI Layer</text>
+  
+  <rect x="20" y="50" width="20" height="20" fill="#8b5cf6" stroke="#7c3aed" stroke-width="1"/>
+  <text x="45" y="65" font-size="14" fill="#1f2937" dominant-baseline="middle">Core Modules</text>
+  
+  <rect x="20" y="80" width="20" height="20" fill="#10b981" stroke="#059669" stroke-width="1"/>
+  <text x="45" y="95" font-size="14" fill="#1f2937" dominant-baseline="middle">Visualization</text>
+  
+  <rect x="20" y="110" width="20" height="20" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
+  <text x="45" y="125" font-size="14" fill="#1f2937" dominant-baseline="middle">API Layer</text>
+</svg>
