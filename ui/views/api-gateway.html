@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gateway - RadixInsight</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="/">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/#overview">Overview</a></li>
+                    <li><a href="/#components">Components</a></li>
+                    <li><a href="/#data-flow">Data Flow</a></li>
+                    <li><a href="/#infrastructure">Infrastructure</a></li>
+                    <li><a href="/#security">Security</a></li>
+                    <li><a href="/#milestones">Milestones</a></li>
+                    <li><a href="/#code">Code Samples</a></li>
+                    <li><a href="/getting-started">Getting Started</a></li>
+                    <li><a href="/api">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>API Gateway</h1>
+            <p>Authentication, rate limiting, request routing, and validation for all API requests</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The API Gateway serves as the entry point for all external requests to the RadixInsight platform. It handles authentication, rate limiting, request routing, and validation, ensuring that only valid requests reach the internal services.</p>
+                
+                <p>Key responsibilities of the API Gateway include:</p>
+                <ul>
+                    <li>Authentication and authorization of API requests</li>
+                    <li>Rate limiting to prevent abuse</li>
+                    <li>Request validation and sanitization</li>
+                    <li>Request routing to appropriate internal services</li>
+                    <li>Response caching for improved performance</li>
+                    <li>API versioning support</li>
+                    <li>Request and response logging</li>
+                    <li>CORS handling for browser-based clients</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Architecture</h2>
+                <p>The API Gateway is built as a modular system with several specialized components:</p>
+                
+                <h3>Authentication Module</h3>
+                <p>Handles user authentication and token validation:</p>
+                <ul>
+                    <li>API key validation for server-to-server communication</li>
+                    <li>JWT token validation for authenticated user sessions</li>
+                    <li>OAuth2 integration for third-party authentication</li>
+                    <li>Role-based access control (RBAC) enforcement</li>
+                </ul>
+                
+                <h3>Rate Limiting Module</h3>
+                <p>Implements various rate limiting strategies to prevent abuse:</p>
+                <ul>
+                    <li>Fixed window rate limiting</li>
+                    <li>Sliding window rate limiting</li>
+                    <li>Token bucket algorithm</li>
+                    <li>Different limits based on authentication status and user role</li>
+                </ul>
+                
+                <h3>Request Validation Module</h3>
+                <p>Validates incoming requests against defined schemas:</p>
+                <ul>
+                    <li>JSON Schema validation for request bodies</li>
+                    <li>Parameter validation for query strings and path parameters</li>
+                    <li>Content-type validation</li>
+                    <li>Input sanitization to prevent injection attacks</li>
+                </ul>
+                
+                <h3>Routing Module</h3>
+                <p>Routes requests to appropriate internal services:</p>
+                <ul>
+                    <li>Path-based routing</li>
+                    <li>Version-based routing</li>
+                    <li>Content-based routing</li>
+                    <li>Load balancing across service instances</li>
+                </ul>
+                
+                <h3>Caching Module</h3>
+                <p>Implements response caching for improved performance:</p>
+                <ul>
+                    <li>Cache-Control header handling</li>
+                    <li>ETag support for conditional requests</li>
+                    <li>Distributed cache using Redis</li>
+                    <li>Cache invalidation mechanisms</li>
+                </ul>
+                
+                <h3>Logging Module</h3>
+                <p>Records request and response details for monitoring and debugging:</p>
+                <ul>
+                    <li>Structured logging in JSON format</li>
+                    <li>Request ID generation for request tracing</li>
+                    <li>Performance metrics collection</li>
+                    <li>Error logging with context information</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>API Endpoints</h2>
+                <p>The API Gateway exposes the following main endpoint groups:</p>
+                
+                <h3>Event Collection Endpoints</h3>
+                <ul>
+                    <li><code>POST /collect</code> - Collect batched events from clients</li>
+                    <li><code>POST /identify</code> - Update user profile information</li>
+                </ul>
+                
+                <h3>Analytics Endpoints</h3>
+                <ul>
+                    <li><code>GET /analytics/events</code> - Query event data</li>
+                    <li><code>GET /analytics/funnels</code> - Perform funnel analysis</li>
+                    <li><code>GET /analytics/retention</code> - Perform retention analysis</li>
+                    <li><code>GET /analytics/segments</code> - Perform user segmentation</li>
+                </ul>
+                
+                <h3>Configuration Endpoints</h3>
+                <ul>
+                    <li><code>GET /config</code> - Retrieve client configuration</li>
+                    <li><code>POST /config</code> - Update client configuration</li>
+                </ul>
+                
+                <h3>Management Endpoints</h3>
+                <ul>
+                    <li><code>GET /projects</code> - List projects</li>
+                    <li><code>POST /projects</code> - Create a new project</li>
+                    <li><code>GET /projects/{id}</code> - Get project details</li>
+                    <li><code>PUT /projects/{id}</code> - Update project</li>
+                    <li><code>DELETE /projects/{id}</code> - Delete project</li>
+                </ul>
+                
+                <h3>User Management Endpoints</h3>
+                <ul>
+                    <li><code>POST /auth/login</code> - User login</li>
+                    <li><code>POST /auth/logout</code> - User logout</li>
+                    <li><code>POST /auth/refresh</code> - Refresh authentication token</li>
+                    <li><code>GET /users</code> - List users</li>
+                    <li><code>POST /users</code> - Create a new user</li>
+                    <li><code>GET /users/{id}</code> - Get user details</li>
+                    <li><code>PUT /users/{id}</code> - Update user</li>
+                    <li><code>DELETE /users/{id}</code> - Delete user</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Authentication</h2>
+                <p>The API Gateway supports multiple authentication methods:</p>
+                
+                <h3>API Keys</h3>
+                <p>Used for server-to-server communication and SDK authentication:</p>
+                <pre><code>
+curl -X POST https://api.radixinsight.com/collect \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{"events": [...]}'
+                </code></pre>
+                
+                <h3>JWT Tokens</h3>
+                <p>Used for authenticated user sessions:</p>
+                <pre><code>
+curl -X GET https://api.radixinsight.com/analytics/events \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json"
+                </code></pre>
+                
+                <h3>OAuth2</h3>
+                <p>Used for third-party authentication:</p>
+                <pre><code>
+# Step 1: Redirect user to authorization URL
+https://auth.radixinsight.com/oauth/authorize?
+  client_id=your-client-id&
+  redirect_uri=https://your-app.com/callback&
+  response_type=code&
+  scope=read
+
+# Step 2: Exchange authorization code for access token
+curl -X POST https://auth.radixinsight.com/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code&
+      code=authorization-code&
+      client_id=your-client-id&
+      client_secret=your-client-secret&
+      redirect_uri=https://your-app.com/callback"
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Rate Limiting</h2>
+                <p>The API Gateway implements rate limiting to prevent abuse:</p>
+                
+                <h3>Rate Limit Headers</h3>
+                <p>Rate limit information is included in response headers:</p>
+                <pre><code>
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1619712000
+                </code></pre>
+                
+                <h3>Rate Limit Tiers</h3>
+                <p>Different rate limits apply based on authentication status and user role:</p>
+                <ul>
+                    <li><strong>Anonymous:</strong> 60 requests per minute</li>
+                    <li><strong>Authenticated (Basic):</strong> 300 requests per minute</li>
+                    <li><strong>Authenticated (Premium):</strong> 1000 requests per minute</li>
+                    <li><strong>Authenticated (Enterprise):</strong> 5000 requests per minute</li>
+                </ul>
+                
+                <h3>Rate Limit Exceeded Response</h3>
+                <p>When rate limits are exceeded, the API returns a 429 Too Many Requests response:</p>
+                <pre><code>
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1619712000
+
+{
+  "error": "rate_limit_exceeded",
+  "message": "Rate limit exceeded. Please try again later.",
+  "retry_after": 60
+}
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Error Handling</h2>
+                <p>The API Gateway provides consistent error responses across all endpoints:</p>
+                
+                <h3>Error Response Format</h3>
+                <pre><code>
+{
+  "error": "error_code",
+  "message": "Human-readable error message",
+  "details": {
+    // Additional error details (optional)
+  },
+  "request_id": "unique-request-identifier"
+}
+                </code></pre>
+                
+                <h3>Common Error Codes</h3>
+                <ul>
+                    <li><code>invalid_request</code> - The request is malformed or contains invalid parameters</li>
+                    <li><code>authentication_required</code> - Authentication is required for this endpoint</li>
+                    <li><code>invalid_credentials</code> - The provided credentials are invalid</li>
+                    <li><code>access_denied</code> - The authenticated user does not have permission to access this resource</li>
+                    <li><code>rate_limit_exceeded</code> - The rate limit for this endpoint has been exceeded</li>
+                    <li><code>resource_not_found</code> - The requested resource does not exist</li>
+                    <li><code>validation_error</code> - The request data failed validation</li>
+                    <li><code>internal_error</code> - An internal server error occurred</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Integration Points</h2>
+                <p>The API Gateway integrates with other components of the RadixInsight platform:</p>
+                
+                <h3>Event Ingestion Service</h3>
+                <p>Routes event collection requests to the Event Ingestion Service:</p>
+                <ul>
+                    <li>Validates event payloads before forwarding</li>
+                    <li>Handles batched event submissions</li>
+                    <li>Provides client-specific configuration</li>
+                </ul>
+                
+                <h3>Analytics Engine</h3>
+                <p>Routes analytics requests to the Analytics Engine:</p>
+                <ul>
+                    <li>Translates API parameters to analytics queries</li>
+                    <li>Handles pagination of large result sets</li>
+                    <li>Caches frequently requested analytics data</li>
+                </ul>
+                
+                <h3>User Management Service</h3>
+                <p>Routes user management requests to the User Management Service:</p>
+                <ul>
+                    <li>Handles user authentication and session management</li>
+                    <li>Enforces access control policies</li>
+                    <li>Manages API keys and tokens</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Deployment</h2>
+                <p>The API Gateway is deployed as a containerized service:</p>
+                
+                <h3>Container Configuration</h3>
+                <pre><code>
+# Docker Compose configuration
+api-gateway:
+  image: radixinsight/api-gateway:latest
+  ports:
+    - "8080:8080"
+  environment:
+    - NODE_ENV=production
+    - PORT=8080
+    - AUTH_SECRET=your-auth-secret
+    - REDIS_URL=redis://redis:6379
+    - EVENT_SERVICE_URL=http://event-ingestion:3000
+    - ANALYTICS_SERVICE_URL=http://analytics-engine:3001
+    - USER_SERVICE_URL=http://user-management:3002
+  depends_on:
+    - redis
+    - event-ingestion
+    - analytics-engine
+    - user-management
+                </code></pre>
+                
+                <h3>Scaling</h3>
+                <p>The API Gateway is designed to scale horizontally:</p>
+                <ul>
+                    <li>Stateless design allows for easy scaling</li>
+                    <li>Uses Redis for distributed rate limiting and caching</li>
+                    <li>Kubernetes deployment with auto-scaling based on CPU and memory usage</li>
+                    <li>Load balancing across multiple instances</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Monitoring</h2>
+                <p>The API Gateway includes comprehensive monitoring:</p>
+                
+                <h3>Metrics</h3>
+                <ul>
+                    <li>Request rate and latency</li>
+                    <li>Error rate by endpoint and error type</li>
+                    <li>Rate limit usage</li>
+                    <li>Cache hit/miss ratio</li>
+                    <li>Authentication success/failure rate</li>
+                </ul>
+                
+                <h3>Logging</h3>
+                <ul>
+                    <li>Structured logs in JSON format</li>
+                    <li>Request tracing with unique request IDs</li>
+                    <li>Error logs with context information</li>
+                    <li>Access logs for security auditing</li>
+                </ul>
+                
+                <h3>Alerting</h3>
+                <ul>
+                    <li>High error rate alerts</li>
+                    <li>Latency threshold alerts</li>
+                    <li>Rate limit exhaustion alerts</li>
+                    <li>Authentication failure spike alerts</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>Platform</h3>
+                    <ul>
+                        <li><a href="/#overview">Overview</a></li>
+                        <li><a href="/#components">Components</a></li>
+                        <li><a href="/#data-flow">Data Flow</a></li>
+                        <li><a href="/#infrastructure">Infrastructure</a></li>
+                        <li><a href="/#security">Security</a></li>
+                        <li><a href="/#milestones">Milestones</a></li>
+                        <li><a href="/#code">Code Samples</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="/api">API Documentation</a></li>
+                        <li><a href="/getting-started">Getting Started</a></li>
+                        <li><a href="/support">Support</a></li>
+                        <li><a href="/faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="/about">About Us</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

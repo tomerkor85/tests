@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ingestion Service - RadixInsight</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="/">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/#overview">Overview</a></li>
+                    <li><a href="/#components">Components</a></li>
+                    <li><a href="/#data-flow">Data Flow</a></li>
+                    <li><a href="/#infrastructure">Infrastructure</a></li>
+                    <li><a href="/#security">Security</a></li>
+                    <li><a href="/#milestones">Milestones</a></li>
+                    <li><a href="/#code">Code Samples</a></li>
+                    <li><a href="/getting-started">Getting Started</a></li>
+                    <li><a href="/api">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Event Ingestion Service</h1>
+            <p>Validates, enriches, and publishes events to the message queue</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Event Ingestion Service is the entry point for all event data in the RadixInsight platform. It receives events from client applications, validates them against defined schemas, enriches them with additional metadata, and publishes them to a message queue for further processing.</p>
+                
+                <p>Key responsibilities of the Event Ingestion Service include:</p>
+                <ul>
+                    <li>Receiving events from client applications</li>
+                    <li>Validating events against defined schemas</li>
+                    <li>Enriching events with additional metadata</li>
+                    <li>Batching events for efficient processing</li>
+                    <li>Publishing events to a message queue</li>
+                    <li>Providing immediate feedback to clients</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Architecture</h2>
+                <p>The Event Ingestion Service is designed as a high-performance, scalable service with several key components:</p>
+                
+                <h3>Request Handler</h3>
+                <p>Processes incoming HTTP requests and manages client connections:</p>
+                <ul>
+                    <li>HTTP/2 support for efficient connections</li>
+                    <li>Connection pooling for high throughput</li>
+                    <li>Request throttling for overload protection</li>
+                    <li>Client authentication and authorization</li>
+                </ul>
+                
+                <h3>Event Validator</h3>
+                <p>Validates incoming events against defined schemas:</p>
+                <ul>
+                    <li>JSON Schema validation</li>
+                    <li>Type checking and coercion</li>
+                    <li>Required field validation</li>
+                    <li>Format validation (e.g., timestamps, UUIDs)</li>
+                </ul>
+                
+                <h3>Event Enricher</h3>
+                <p>Enriches events with additional metadata:</p>
+                <ul>
+                    <li>Timestamp normalization</li>
+                    <li>IP-based geolocation</li>
+                    <li>User agent parsing</li>
+                    <li>Session correlation</li>
+                </ul>
+                
+                <h3>Event Publisher</h3>
+                <p>Publishes events to a message queue for further processing:</p>
+                <ul>
+                    <li>Batching for efficient publishing</li>
+                    <li>Retry logic for handling temporary failures</li>
+                    <li>Backpressure handling</li>
+                    <li>Delivery guarantees (at-least-once semantics)</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Event Flow</h2>
+                <p>The event flow through the Event Ingestion Service consists of several stages:</p>
+                
+                <h3>1. Event Reception</h3>
+                <p>Events are received via HTTP API endpoints:</p>
+                <pre><code class="language-javascript">
+// Example client-side code for sending events
+const events = [
+  {
+    event_type: "page_view",
+    user_id: "user-123",
+    timestamp: Date.now(),
+    properties: {
+      page: "/products",
+      referrer: "https://google.com",
+      device: "mobile"
+    }
+  },
+  {
+    event_type: "button_click",
+    user_id: "user-123",
+    timestamp: Date.now(),
+    properties: {
+      button_id: "add-to-cart",
+      product_id: "prod-456"
+    }
+  }
+];
+
+// Send events to the ingestion service
+fetch("https://api.radixinsight.com/collect", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "your-api-key"
+  },
+  body: JSON.stringify({ events })
+})
+.then(response => response.json())
+.then(data => console.log("Events sent successfully:", data))
+.catch(error => console.error("Error sending events:", error));
+                </code></pre>
+                
+                <h3>2. Event Validation</h3>
+                <p>Received events are validated against defined schemas:</p>
+                <pre><code class="language-javascript">
+// Server-side validation logic (Node.js example)
+const Ajv = require('ajv');
+const ajv = new Ajv({ allErrors: true });
+
+// Event schema definition
+const eventSchema = {
+  type: 'object',
+  required: ['event_type', 'user_id', 'timestamp', 'properties'],
+  properties: {
+    event_type: { type: 'string', minLength: 1 },
+    user_id: { type: 'string', minLength: 1 },
+    timestamp: { type: 'number' },
+    properties: { 
+      type: 'object',
+      additionalProperties: true
+    }
+  }
+};
+
+// Validate event against schema
+function validateEvent(event) {
+  const validate = ajv.compile(eventSchema);
+  const valid = validate(event);
+  
+  if (!valid) {
+    return {
+      valid: false,
+      errors: validate.errors
+    };
+  }
+  
+  return { valid: true };
+}
+                </code></pre>
+                
+                <h3>3. Event Enrichment</h3>
+                <p>Validated events are enriched with additional metadata:</p>
+                <pre><code class="language-javascript">
+// Server-side enrichment logic (Node.js example)
+function enrichEvent(event, request) {
+  // Create a copy to avoid modifying the original
+  const enriched = { ...event };
+  
+  // Add server-side timestamp
+  enriched.server_timestamp = Date.now();
+  
+  // Add IP address and geolocation
+  enriched.ip_address = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+  
+  if (enriched.ip_address) {
+    try {
+      const geo = geoip.lookup(enriched.ip_address);
+      if (geo) {
+        enriched.geo = {
+          country: geo.country,
+          region: geo.region,
+          city: geo.city,
+          latitude: geo.ll[0],
+          longitude: geo.ll[1]
+        };
+      }
+    } catch (error) {
+      console.error('Geolocation error:', error);
+    }
+  }
+  
+  // Parse user agent
+  const userAgent = request.headers['user-agent'];
+  if (userAgent) {
+    try {
+      const ua = uaParser(userAgent);
+      enriched.user_agent = {
+        browser: ua.browser.name,
+        browser_version: ua.browser.version,
+        os: ua.os.name,
+        os_version: ua.os.version,
+        device: ua.device.type || 'desktop'
+      };
+    } catch (error) {
+      console.error('User agent parsing error:', error);
+    }
+  }
+  
+  // Add project ID from API key
+  enriched.project_id = request.project.id;
+  
+  return enriched;
+}
+                </code></pre>
+                
+                <h3>4. Event Publishing</h3>
+                <p>Enriched events are published to a message queue:</p>
+                <pre><code class="language-javascript">
+// Server-side publishing logic (Node.js example)
+const { Kafka } = require('kafkajs');
+
+const kafka = new Kafka({
+  clientId: 'event-ingestion-service',
+  brokers: ['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092']
+});
+
+const producer = kafka.producer();
+
+async function publishEvents(events) {
+  try {
+    await producer.connect();
+    
+    const messages = events.map(event => ({
+      key: event.user_id,
+      value: JSON.stringify(event)
+    }));
+    
+    await producer.send({
+      topic: 'events',
+      messages
+    });
+    
+    return { success: true, count: events.length };
+  } catch (error) {
+    console.error('Error publishing events:', error);
+    return { success: false, error: error.message };
+  } finally {
+    await producer.disconnect();
+  }
+}
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>API Endpoints</h2>
+                <p>The Event Ingestion Service exposes the following API endpoints:</p>
+                
+                <h3>Collect Endpoint</h3>
+                <p>Used to send batched events to the platform:</p>
+                <pre><code>
+POST /collect
+Content-Type: application/json
+X-API-Key: your-api-key
+
+{
+  "events": [
+    {
+      "event_type": "page_view",
+      "user_id": "user-123",
+      "timestamp": 1619712000000,
+      "properties": {
+        "page": "/products",
+        "referrer": "https://google.com",
+        "device": "mobile"
+      }
+    },
+    {
+      "event_type": "button_click",
+      "user_id": "user-123",
+      "timestamp": 1619712010000,
+      "properties": {
+        "button_id": "add-to-cart",
+        "product_id": "prod-456"
+      }
+    }
+  ]
+}
+                </code></pre>
+                
+                <h3>Identify Endpoint</h3>
+                <p>Used to update user profile information:</p>
+                <pre><code>
+POST /identify
+Content-Type: application/json
+X-API-Key: your-api-key
+
+{
+  "user_id": "user-123",
+  "timestamp": 1619712000000,
+  "traits": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "plan": "premium",
+    "signup_date": "2023-01-15"
+  }
+}
+                </code></pre>
+                
+                <h3>Config Endpoint</h3>
+                <p>Used to retrieve client configuration:</p>
+                <pre><code>
+GET /config?project_id=your-project-id
+X-API-Key: your-api-key
+                </code></pre>
+                
+                <p>For complete API documentation, visit the <a href="/api">RadixInsight API Reference</a>.</p>
+            </div>
+
+            <div class="component-section">
+                <h2>Component Relationships</h2>
+                <div class="component-relationships">
+                    <h3>Dependencies</h3>
+                    <ul>
+                        <li><strong>API Gateway:</strong> Routes requests to the Event Ingestion Service</li>
+                        <li><strong>Message Queue:</strong> Receives published events for asynchronous processing</li>
+                        <li><strong>Redis Cache:</strong> Stores temporary data like rate limiting counters</li>
+                    </ul>
+                    
+                    <h3>Dependents</h3>
+                    <ul>
+                        <li><strong>Event Consumer Service:</strong> Processes events from the message queue</li>
+                        <li><strong>JavaScript SDK:</strong> Sends events to the Event Ingestion Service</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>Performance Considerations</h2>
+                <p>The Event Ingestion Service is designed for high performance and reliability:</p>
+                
+                <h3>Throughput Optimization</h3>
+                <ul>
+                    <li>Batch processing of events</li>
+                    <li>Asynchronous event publishing</li>
+                    <li>Connection pooling for database and queue connections</li>
+                    <li>Minimal validation to reduce processing overhead</li>
+                </ul>
+                
+                <h3>Reliability Measures</h3>
+                <ul>
+                    <li>Circuit breaker pattern for external dependencies</li>
+                    <li>Retry logic with exponential backoff</li>
+                    <li>Local buffering during queue outages</li>
+                    <li>Graceful degradation during high load</li>
+                </ul>
+                
+                <h3>Scalability</h3>
+                <ul>
+                    <li>Stateless design for horizontal scaling</li>
+                    <li>Load balancing across multiple instances</li>
+                    <li>Auto-scaling based on request rate and CPU usage</li>
+                    <li>Distributed rate limiting using Redis</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Deployment</h2>
+                <p>The Event Ingestion Service is deployed as a containerized service:</p>
+                
+                <h3>Container Configuration</h3>
+                <pre><code>
+# Docker Compose configuration
+event-ingestion:
+  image: radixinsight/event-ingestion:latest
+  ports:
+    - "3000:3000"
+  environment:
+    - NODE_ENV=production
+    - PORT=3000
+    - KAFKA_BROKERS=kafka-1:9092,kafka-2:9092,kafka-3:9092
+    - REDIS_URL=redis://redis:6379
+    - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+    - LOG_LEVEL=info
+  depends_on:
+    - kafka-1
+    - kafka-2
+    - kafka-3
+    - redis
+    - schema-registry
+                </code></pre>
+                
+                <h3>Kubernetes Deployment</h3>
+                <pre><code>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-ingestion
+  labels:
+    app: event-ingestion
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: event-ingestion
+  template:
+    metadata:
+      labels:
+        app: event-ingestion
+    spec:
+      containers:
+      - name: event-ingestion
+        image: radixinsight/event-ingestion:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: KAFKA_BROKERS
+          value: "kafka-1:9092,kafka-2:9092,kafka-3:9092"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: SCHEMA_REGISTRY_URL
+          value: "http://schema-registry:8081"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Monitoring</h2>
+                <p>The Event Ingestion Service includes comprehensive monitoring:</p>
+                
+                <h3>Metrics</h3>
+                <ul>
+                    <li>Request rate and latency</li>
+                    <li>Event validation success/failure rate</li>
+                    <li>Event publishing success/failure rate</li>
+                    <li>Queue backlog size</li>
+                    <li>Memory and CPU usage</li>
+                </ul>
+                
+                <h3>Logging</h3>
+                <ul>
+                    <li>Structured logs in JSON format</li>
+                    <li>Request tracing with unique request IDs</li>
+                    <li>Error logs with context information</li>
+                    <li>Validation failure details</li>
+                </ul>
+                
+                <h3>Alerting</h3>
+                <ul>
+                    <li>High error rate alerts</li>
+                    <li>Latency threshold alerts</li>
+                    <li>Queue backlog size alerts</li>
+                    <li>Memory usage alerts</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Future Enhancements</h2>
+                <p>Planned improvements for the Event Ingestion Service include:</p>
+                
+                <ul>
+                    <li><strong>Schema Registry Integration:</strong> Dynamic schema validation based on registered schemas</li>
+                    <li><strong>Event Sampling:</strong> Intelligent sampling of high-volume events</li>
+                    <li><strong>Real-time Validation Rules:</strong> User-configurable validation rules</li>
+                    <li><strong>Enhanced Privacy Controls:</strong> PII detection and redaction</li>
+                    <li><strong>Multi-region Deployment:</strong> Global distribution for reduced latency</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

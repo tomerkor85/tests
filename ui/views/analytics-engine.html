@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Engine - RadixInsight</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="/">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/#overview">Overview</a></li>
+                    <li><a href="/#components">Components</a></li>
+                    <li><a href="/#data-flow">Data Flow</a></li>
+                    <li><a href="/#infrastructure">Infrastructure</a></li>
+                    <li><a href="/#security">Security</a></li>
+                    <li><a href="/#milestones">Milestones</a></li>
+                    <li><a href="/#code">Code Samples</a></li>
+                    <li><a href="/getting-started">Getting Started</a></li>
+                    <li><a href="/api">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Analytics Engine</h1>
+            <p>Translates dashboard requests into optimized database queries</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Analytics Engine is the computational core of the RadixInsight platform, responsible for translating high-level analytics requests from the dashboard into optimized database queries. It provides a powerful abstraction layer that enables complex analytics operations without requiring users to write SQL or understand the underlying data structure.</p>
+                
+                <p>Key capabilities of the Analytics Engine include:</p>
+                <ul>
+                    <li>Query generation and optimization for ClickHouse</li>
+                    <li>Support for various analytics operations (segmentation, funnels, retention, etc.)</li>
+                    <li>Intelligent caching of query results</li>
+                    <li>Automatic handling of time zones and date formats</li>
+                    <li>Extensible plugin architecture for custom analytics operations</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Architecture</h2>
+                <p>The Analytics Engine is built as a modular system with several specialized components:</p>
+                
+                <h3>Query Builder</h3>
+                <p>Constructs optimized SQL queries based on analytics requests. It includes specialized modules for different types of analytics:</p>
+                <ul>
+                    <li><strong>Event Query Builder:</strong> For basic event queries and filtering</li>
+                    <li><strong>Funnel Query Builder:</strong> For multi-step conversion analysis</li>
+                    <li><strong>Retention Query Builder:</strong> For cohort retention analysis</li>
+                    <li><strong>Segmentation Query Builder:</strong> For user segmentation and property analysis</li>
+                </ul>
+                
+                <h3>Query Optimizer</h3>
+                <p>Analyzes and optimizes generated queries to ensure efficient execution. Optimization techniques include:</p>
+                <ul>
+                    <li>Automatic index selection</li>
+                    <li>Query rewriting for better performance</li>
+                    <li>Materialized view utilization</li>
+                    <li>Partition pruning optimization</li>
+                </ul>
+                
+                <h3>Result Processor</h3>
+                <p>Transforms raw query results into the format expected by visualization components. Processing includes:</p>
+                <ul>
+                    <li>Data aggregation and summarization</li>
+                    <li>Time series alignment</li>
+                    <li>Statistical calculations</li>
+                    <li>Format conversion for visualization libraries</li>
+                </ul>
+                
+                <h3>Cache Manager</h3>
+                <p>Implements intelligent caching strategies to improve performance for frequently accessed data:</p>
+                <ul>
+                    <li>Time-based cache invalidation</li>
+                    <li>Query fingerprinting for cache lookup</li>
+                    <li>Partial result caching</li>
+                    <li>Background cache warming for common queries</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Query Examples</h2>
+                <p>The following examples demonstrate how the Analytics Engine translates high-level analytics requests into optimized ClickHouse queries.</p>
+                
+                <h3>Event Count Query</h3>
+                <pre><code class="language-python">
+# Python representation of the query builder logic
+def build_event_count_query(self):
+    return f"""
+    SELECT
+        toStartOfInterval(timestamp, INTERVAL {self.interval} {self.interval_unit}) as time_bucket,
+        count() as count
+    FROM events
+    WHERE
+        project_id = '{self.project_id}'
+        AND timestamp BETWEEN toDateTime('{self.start_date}') AND toDateTime('{self.end_date}')
+        AND event_type = '{self.event_type}'
+    GROUP BY time_bucket
+    ORDER BY time_bucket
+    """
+                </code></pre>
+                
+                <h3>Funnel Analysis Query</h3>
+                <pre><code class="language-python">
+# Python representation of the funnel query builder logic
+def build_funnel_query(self, step_conditions):
+    return f"""
+        SELECT
+            level,
+            count() as count,
+            round(count() / first_value(count()) OVER (ORDER BY level) * 100, 2) as conversion_rate
+        FROM (
+            SELECT
+                {self.user_id_column},
+                max(level) as level
+            FROM (
+                SELECT
+                    {self.user_id_column},
+                    timestamp,
+                    multiIf(
+                        {', '.join([f'{cond}, {i+1}' for i, cond in enumerate(step_conditions)])},
+                        0
+                    ) as level
+                FROM events
+                WHERE
+                    project_id = '{self.project_id}'
+                    AND timestamp >= toDateTime('{self.start_date}') 
+                    AND timestamp <= toDateTime('{self.end_date}')
+            )
+            GROUP BY {self.user_id_column}
+        )
+        GROUP BY level
+        ORDER BY level
+    """
+                </code></pre>
+                
+                <h3>Retention Analysis Query</h3>
+                <pre><code class="language-python">
+# Python representation of the retention query builder logic
+def build_retention_query(self):
+    return f"""
+    WITH first_events AS (
+        SELECT
+            {self.user_id_column},
+            min(timestamp) as first_seen
+        FROM events
+        WHERE
+            project_id = '{self.project_id}'
+            AND event_type = '{self.first_event}'
+            AND timestamp BETWEEN toDateTime('{self.start_date}') AND toDateTime('{self.end_date}')
+        GROUP BY {self.user_id_column}
+    ),
+    
+    cohorts AS (
+        SELECT
+            {self.user_id_column},
+            toStartOfInterval(first_seen, INTERVAL 1 {self.cohort_interval}) as cohort
+        FROM first_events
+    ),
+    
+    return_events AS (
+        SELECT
+            c.{self.user_id_column},
+            c.cohort,
+            e.timestamp,
+            dateDiff('{self.cohort_interval}', c.cohort, toStartOfInterval(e.timestamp, INTERVAL 1 {self.cohort_interval})) as period
+        FROM cohorts c
+        JOIN events e ON c.{self.user_id_column} = e.{self.user_id_column}
+        WHERE
+            e.project_id = '{self.project_id}'
+            AND e.event_type = '{self.return_event}'
+            AND e.timestamp >= c.cohort
+    )
+    
+    SELECT
+        cohort,
+        period,
+        count(DISTINCT {self.user_id_column}) as users,
+        count(DISTINCT {self.user_id_column}) / first_value(count(DISTINCT {self.user_id_column})) OVER (PARTITION BY cohort ORDER BY period) as retention_rate
+    FROM (
+        SELECT
+            cohort,
+            {self.user_id_column},
+            period
+        FROM return_events
+        GROUP BY cohort, {self.user_id_column}, period
+    )
+    GROUP BY cohort, period
+    ORDER BY cohort, period
+    """
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Integration Points</h2>
+                <p>The Analytics Engine integrates with other components of the RadixInsight platform:</p>
+                
+                <h3>Dashboard Integration</h3>
+                <p>The Analytics Engine exposes a REST API that the dashboard uses to request analytics data:</p>
+                <ul>
+                    <li><code>GET /api/analytics/events</code> - Event counts and properties</li>
+                    <li><code>GET /api/analytics/funnels</code> - Funnel analysis</li>
+                    <li><code>GET /api/analytics/retention</code> - Cohort retention analysis</li>
+                    <li><code>GET /api/analytics/segments</code> - User segmentation</li>
+                </ul>
+                
+                <h3>Database Integration</h3>
+                <p>The Analytics Engine connects to the ClickHouse database for event data and PostgreSQL for metadata:</p>
+                <ul>
+                    <li>Uses connection pooling for efficient database access</li>
+                    <li>Implements circuit breakers to handle database failures</li>
+                    <li>Supports read replicas for scaling query performance</li>
+                </ul>
+                
+                <h3>Cache Integration</h3>
+                <p>The Analytics Engine uses Redis for caching query results:</p>
+                <ul>
+                    <li>Implements a two-level caching strategy (memory and Redis)</li>
+                    <li>Uses cache versioning to handle schema changes</li>
+                    <li>Supports cache warming for predictable query patterns</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Performance Considerations</h2>
+                <p>The Analytics Engine is designed for high performance and scalability:</p>
+                
+                <h3>Query Optimization</h3>
+                <ul>
+                    <li>Automatic query rewriting for optimal performance</li>
+                    <li>Use of materialized views for common query patterns</li>
+                    <li>Partition pruning to minimize data scanned</li>
+                    <li>Parallel query execution where possible</li>
+                </ul>
+                
+                <h3>Caching Strategy</h3>
+                <ul>
+                    <li>Multi-level caching (in-memory and Redis)</li>
+                    <li>Time-based cache invalidation</li>
+                    <li>Partial result caching</li>
+                    <li>Background cache warming</li>
+                </ul>
+                
+                <h3>Resource Management</h3>
+                <ul>
+                    <li>Query timeout mechanisms</li>
+                    <li>Resource limits for individual queries</li>
+                    <li>Query queue management</li>
+                    <li>Graceful degradation under high load</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Future Enhancements</h2>
+                <p>Planned improvements for the Analytics Engine include:</p>
+                
+                <ul>
+                    <li><strong>Machine Learning Integration:</strong> Adding predictive analytics capabilities</li>
+                    <li><strong>Natural Language Query:</strong> Allowing users to query data using natural language</li>
+                    <li><strong>Advanced Anomaly Detection:</strong> Automatically identifying unusual patterns in data</li>
+                    <li><strong>Custom Metric Builder:</strong> Enabling users to define custom metrics and KPIs</li>
+                    <li><strong>Query Suggestion System:</strong> Recommending relevant queries based on user behavior</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Consumer Service - RadixInsight</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="/">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/#overview">Overview</a></li>
+                    <li><a href="/#components">Components</a></li>
+                    <li><a href="/#data-flow">Data Flow</a></li>
+                    <li><a href="/#infrastructure">Infrastructure</a></li>
+                    <li><a href="/#security">Security</a></li>
+                    <li><a href="/#milestones">Milestones</a></li>
+                    <li><a href="/#code">Code Samples</a></li>
+                    <li><a href="/getting-started">Getting Started</a></li>
+                    <li><a href="/api">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Event Consumer Service</h1>
+            <p>Processes events from the queue and writes to storage</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Event Consumer Service is responsible for processing events from the message queue and writing them to the appropriate storage systems. It ensures reliable event processing, handles data transformations, and maintains data consistency across storage layers.</p>
+                
+                <p>Key responsibilities of the Event Consumer Service include:</p>
+                <ul>
+                    <li>Consuming events from the message queue</li>
+                    <li>Transforming events into the appropriate storage format</li>
+                    <li>Writing events to ClickHouse for analytics</li>
+                    <li>Updating user profiles in PostgreSQL</li>
+                    <li>Handling processing failures and retries</li>
+                    <li>Monitoring event processing metrics</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Architecture</h2>
+                <p>The Event Consumer Service is built as a scalable, fault-tolerant system with several key components:</p>
+                
+                <h3>Queue Consumer</h3>
+                <p>Responsible for reading events from the message queue:</p>
+                <ul>
+                    <li>Configurable batch size for efficient processing</li>
+                    <li>Automatic consumer group management</li>
+                    <li>Offset management for exactly-once processing</li>
+                    <li>Graceful handling of consumer rebalancing</li>
+                </ul>
+                
+                <h3>Event Processor</h3>
+                <p>Processes events and prepares them for storage:</p>
+                <ul>
+                    <li>Event validation and schema enforcement</li>
+                    <li>Data enrichment with additional context</li>
+                    <li>Format transformation for different storage systems</li>
+                    <li>Event deduplication</li>
+                </ul>
+                
+                <h3>Storage Writer</h3>
+                <p>Writes processed events to storage systems:</p>
+                <ul>
+                    <li>Bulk writing to ClickHouse for efficiency</li>
+                    <li>Transactional updates to PostgreSQL</li>
+                    <li>Retry logic for handling temporary storage failures</li>
+                    <li>Circuit breaker pattern for storage system outages</li>
+                </ul>
+                
+                <h3>Error Handler</h3>
+                <p>Manages processing errors and retries:</p>
+                <ul>
+                    <li>Dead-letter queue for unprocessable events</li>
+                    <li>Configurable retry policies</li>
+                    <li>Error categorization and reporting</li>
+                    <li>Alerting for critical failures</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Event Processing Flow</h2>
+                <p>The event processing flow consists of several stages:</p>
+                
+                <h3>1. Event Consumption</h3>
+                <p>Events are consumed from the message queue in batches:</p>
+                <pre><code class="language-python">
+# Python representation of the event consumption logic
+def consume_events(self):
+    while self.running:
+        try:
+            # Fetch batch of messages from queue
+            messages = self.consumer.poll(timeout_ms=5000)
+            
+            if not messages:
+                continue
+                
+            # Process each message batch
+            for partition, batch in messages.items():
+                self.process_batch(batch)
+                
+            # Commit offsets after successful processing
+            self.consumer.commit()
+                
+        except Exception as e:
+            self.logger.error(f"Error consuming events: {str(e)}")
+            time.sleep(5)  # Backoff before retry
+                </code></pre>
+                
+                <h3>2. Event Transformation</h3>
+                <p>Raw events are transformed into the appropriate format for storage:</p>
+                <pre><code class="language-python">
+# Python representation of the event transformation logic
+def transform_event(self, event):
+    # Create a copy to avoid modifying the original
+    transformed = event.copy()
+    
+    # Generate a unique event ID if not present
+    if "event_id" not in transformed:
+        content = json.dumps(transformed, sort_keys=True)
+        content_hash = hashlib.md5(content.encode()).hexdigest()
+        transformed["event_id"] = content_hash
+    
+    # Convert timestamp to datetime for easier querying
+    if "timestamp" in transformed:
+        # Store original timestamp
+        transformed["original_timestamp"] = transformed["timestamp"]
+        
+        # Convert to datetime string in UTC
+        timestamp_ms = int(transformed["timestamp"])
+        dt = datetime.datetime.fromtimestamp(timestamp_ms / 1000.0, tz=datetime.timezone.utc)
+        transformed["timestamp"] = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+        # Add date components for partitioning
+        transformed["event_date"] = dt.strftime("%Y-%m-%d")
+        transformed["event_hour"] = dt.hour
+    
+    # Add processing metadata
+    transformed["processed_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+    
+    return transformed
+                </code></pre>
+                
+                <h3>3. Storage Writing</h3>
+                <p>Transformed events are written to the appropriate storage systems:</p>
+                <pre><code class="language-python">
+# Python representation of the storage writing logic
+def write_to_clickhouse(self, events):
+    try:
+        # Prepare batch insert query
+        query = f"""
+            INSERT INTO events (
+                event_id, project_id, event_type, user_id, timestamp,
+                event_date, event_hour, properties, processed_at
+            ) VALUES
+        """
+        
+        # Prepare values
+        values = []
+        for event in events:
+            # Extract required fields
+            event_id = event.get("event_id", "")
+            project_id = event.get("project_id", "")
+            event_type = event.get("event_type", "")
+            user_id = event.get("user_id", "")
+            timestamp = event.get("timestamp", "")
+            event_date = event.get("event_date", "")
+            event_hour = event.get("event_hour", 0)
+            properties = json.dumps(event.get("properties", {}))
+            processed_at = event.get("processed_at", "")
+            
+            # Add to values list
+            values.append(f"('{event_id}', '{project_id}', '{event_type}', '{user_id}', '{timestamp}', '{event_date}', {event_hour}, '{properties}', '{processed_at}')")
+        
+        # Complete query with values
+        query += ",\n".join(values)
+        
+        # Execute query
+        self.clickhouse_client.execute(query)
+        
+        return True
+    except Exception as e:
+        self.logger.error(f"Error writing to ClickHouse: {str(e)}")
+        return False
+                </code></pre>
+                
+                <h3>4. Error Handling</h3>
+                <p>Errors during processing are handled with appropriate retry logic:</p>
+                <pre><code class="language-python">
+# Python representation of the error handling logic
+def handle_processing_error(self, events, error):
+    # Categorize error
+    if isinstance(error, (ConnectionError, TimeoutError)):
+        # Temporary connection issue, retry
+        self.retry_queue.extend(events)
+        self.logger.warning(f"Temporary connection error, added {len(events)} events to retry queue: {str(error)}")
+    elif isinstance(error, ValueError):
+        # Data validation error, send to dead-letter queue
+        self.send_to_dead_letter_queue(events, error)
+        self.logger.error(f"Validation error, sent {len(events)} events to dead-letter queue: {str(error)}")
+    else:
+        # Unknown error, log and send to dead-letter queue
+        self.send_to_dead_letter_queue(events, error)
+        self.logger.error(f"Unknown error processing {len(events)} events: {str(error)}")
+        
+    # Update metrics
+    self.metrics.increment("processing_errors", tags={"error_type": type(error).__name__})
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Scaling and Performance</h2>
+                <p>The Event Consumer Service is designed for horizontal scalability and high performance:</p>
+                
+                <h3>Horizontal Scaling</h3>
+                <ul>
+                    <li>Multiple consumer instances can run in parallel</li>
+                    <li>Consumer group management ensures balanced partition assignment</li>
+                    <li>Auto-scaling based on queue lag metrics</li>
+                </ul>
+                
+                <h3>Performance Optimization</h3>
+                <ul>
+                    <li>Batch processing for efficient queue consumption</li>
+                    <li>Bulk inserts for database efficiency</li>
+                    <li>Connection pooling for database connections</li>
+                    <li>Asynchronous processing where possible</li>
+                </ul>
+                
+                <h3>Resource Management</h3>
+                <ul>
+                    <li>Configurable batch sizes and processing intervals</li>
+                    <li>Memory usage monitoring and limiting</li>
+                    <li>Graceful shutdown with in-flight request completion</li>
+                    <li>CPU and I/O throttling to prevent resource exhaustion</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Monitoring and Observability</h2>
+                <p>The Event Consumer Service includes comprehensive monitoring:</p>
+                
+                <h3>Metrics</h3>
+                <ul>
+                    <li>Events processed per second</li>
+                    <li>Processing latency</li>
+                    <li>Queue lag (difference between newest message and consumer position)</li>
+                    <li>Error rate by error type</li>
+                    <li>Storage write latency</li>
+                    <li>Batch size distribution</li>
+                </ul>
+                
+                <h3>Logging</h3>
+                <ul>
+                    <li>Structured logs in JSON format</li>
+                    <li>Log correlation with event batch IDs</li>
+                    <li>Error logs with context information</li>
+                    <li>Processing milestone logging</li>
+                </ul>
+                
+                <h3>Alerting</h3>
+                <ul>
+                    <li>High error rate alerts</li>
+                    <li>Queue lag threshold alerts</li>
+                    <li>Processing latency alerts</li>
+                    <li>Dead-letter queue size alerts</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Deployment</h2>
+                <p>The Event Consumer Service is deployed as a containerized service:</p>
+                
+                <h3>Container Configuration</h3>
+                <pre><code>
+# Docker Compose configuration
+event-consumer:
+  image: radixinsight/event-consumer:latest
+  environment:
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    - KAFKA_CONSUMER_GROUP=event-consumers
+    - KAFKA_TOPIC=events
+    - CLICKHOUSE_HOST=clickhouse
+    - CLICKHOUSE_PORT=9000
+    - CLICKHOUSE_DB=events
+    - CLICKHOUSE_USER=default
+    - POSTGRES_HOST=postgres
+    - POSTGRES_PORT=5432
+    - POSTGRES_DB=radixinsight
+    - POSTGRES_USER=radixinsight
+    - BATCH_SIZE=100
+    - PROCESSING_THREADS=4
+  depends_on:
+    - kafka
+    - clickhouse
+    - postgres
+                </code></pre>
+                
+                <h3>Kubernetes Deployment</h3>
+                <pre><code>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-consumer
+  labels:
+    app: event-consumer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: event-consumer
+  template:
+    metadata:
+      labels:
+        app: event-consumer
+    spec:
+      containers:
+      - name: event-consumer
+        image: radixinsight/event-consumer:latest
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: KAFKA_CONSUMER_GROUP
+          value: "event-consumers"
+        - name: KAFKA_TOPIC
+          value: "events"
+        - name: CLICKHOUSE_HOST
+          value: "clickhouse"
+        - name: CLICKHOUSE_PORT
+          value: "9000"
+        - name: CLICKHOUSE_DB
+          value: "events"
+        - name: CLICKHOUSE_USER
+          value: "default"
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "radixinsight"
+        - name: POSTGRES_USER
+          value: "radixinsight"
+        - name: BATCH_SIZE
+          value: "100"
+        - name: PROCESSING_THREADS
+          value: "4"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Future Enhancements</h2>
+                <p>Planned improvements for the Event Consumer Service include:</p>
+                
+                <ul>
+                    <li><strong>Schema Evolution Support:</strong> Handling changes in event schemas over time</li>
+                    <li><strong>Real-time Processing:</strong> Adding support for real-time event processing and streaming analytics</li>
+                    <li><strong>Event Replay:</strong> Capability to replay historical events for reprocessing</li>
+                    <li><strong>Custom Transformations:</strong> User-defined transformation rules for events</li>
+                    <li><strong>Multi-tenancy Isolation:</strong> Enhanced isolation between different customer data</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

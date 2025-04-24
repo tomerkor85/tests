@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadixInsight - Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/modern-styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>RadixInsight</h2>
+                <p>Analytics Platform</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link active">
+                        <i class="fas fa-chart-line sidebar-menu-icon"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link" id="clients-link">
+                        <i class="fas fa-building sidebar-menu-icon"></i>
+                        <span>Clients</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link">
+                        <i class="fas fa-cog sidebar-menu-icon"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/login" class="sidebar-menu-link">
+                        <i class="fas fa-sign-out-alt sidebar-menu-icon"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Analytics Dashboard</h1>
+                <div class="dashboard-actions">
+                    <button class="btn btn-primary" id="new-client-btn">
+                        <i class="fas fa-plus"></i> New Client
+                    </button>
+                </div>
+            </div>
+
+            <!-- Client List -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Client Management</h3>
+                    <div>
+                        <input type="text" class="form-control" placeholder="Search clients..." id="client-search">
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>Client ID</th>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Demo Client</td>
+                                    <td>demo-client-123</td>
+                                    <td>https://demo-client.example.com</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline view-client-btn" data-id="demo-client-123">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline edit-client-btn" data-id="demo-client-123">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Test Client</td>
+                                    <td>test-client-456</td>
+                                    <td>https://test-client.example.com</td>
+                                    <td><span class="badge badge-warning">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline view-client-btn" data-id="test-client-456">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline edit-client-btn" data-id="test-client-456">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-title"><i class="fas fa-users"></i> Total Clients</div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> 2 new this month
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title"><i class="fas fa-chart-line"></i> Total Events</div>
+                    <div class="stat-value">1.2M</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> 8.5% from last month
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title"><i class="fas fa-server"></i> System Status</div>
+                    <div class="stat-value">Healthy</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i> All services operational
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title"><i class="fas fa-clock"></i> Uptime</div>
+                    <div class="stat-value">99.9%</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> 0.2% from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Client Modal -->
+    <div class="modal" id="newClientModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create New Client</h4>
+                    <button type="button" class="btn btn-sm btn-ghost" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="new-client-form">
+                        <div class="form-group">
+                            <label for="client-name" class="form-label">Client Name</label>
+                            <input type="text" id="client-name" class="form-control" placeholder="Enter client name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="client-id" class="form-label">Client ID</label>
+                            <input type="text" id="client-id" class="form-control" placeholder="Enter client ID" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="client-url" class="form-label">Client URL</label>
+                            <input type="url" id="client-url" class="form-control" placeholder="https://example.com" required>
+                            <small class="text-secondary">URL where the SDK will be embedded</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="client-admin-email" class="form-label">Admin Email</label>
+                            <input type="email" id="client-admin-email" class="form-control" placeholder="admin@example.com" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="create-client-btn">
+                        <i class="fas fa-plus-circle"></i> Create Client
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Client Modal -->
+    <div class="modal" id="viewClientModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Client Details</h4>
+                    <button type="button" class="btn btn-sm btn-ghost" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="client-details">
+                        <div class="mb-4">
+                            <h5>Client Information</h5>
+                            <div class="d-flex mb-2">
+                                <div style="width: 120px; font-weight: 500;">Name:</div>
+                                <div id="view-client-name">Demo Client</div>
+                            </div>
+                            <div class="d-flex mb-2">
+                                <div style="width: 120px; font-weight: 500;">Client ID:</div>
+                                <div id="view-client-id">demo-client-123</div>
+                            </div>
+                            <div class="d-flex mb-2">
+                                <div style="width: 120px; font-weight: 500;">URL:</div>
+                                <div id="view-client-url">https://demo-client.example.com</div>
+                            </div>
+                            <div class="d-flex mb-2">
+                                <div style="width: 120px; font-weight: 500;">Status:</div>
+                                <div id="view-client-status">Active</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>SDK Integration</h5>
+                            <pre class="code-block"><code id="sdk-code">// Add this script to your website
+&lt;script src="https://cdn.radixinsight.com/sdk.js?client=demo-client-123"&gt;&lt;/script&gt;
+
+// Initialize the SDK
+&lt;script&gt;
+  document.addEventListener('DOMContentLoaded', function() {
+    RadixInsight.init({
+      clientId: 'demo-client-123'
+    });
+  });
+&lt;/script&gt;</code></pre>
+                            <button class="btn btn-sm btn-outline" id="copy-sdk-code">
+                                <i class="fas fa-copy"></i> Copy Code
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <h5>API Keys</h5>
+                            <div class="d-flex mb-2">
+                                <div style="width: 120px; font-weight: 500;">API Key:</div>
+                                <div id="view-client-api-key">••••••••••••••••</div>
+                                <button class="btn btn-sm btn-ghost ml-2" id="show-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-sm btn-outline" id="regenerate-api-key">
+                                <i class="fas fa-sync-alt"></i> Regenerate API Key
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Client Modal -->
+    <div class="modal" id="editClientModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit Client</h4>
+                    <button type="button" class="btn btn-sm btn-ghost" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-client-form">
+                        <input type="hidden" id="edit-client-id-hidden">
+                        <div class="form-group">
+                            <label for="edit-client-name" class="form-label">Client Name</label>
+                            <input type="text" id="edit-client-name" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-client-id" class="form-label">Client ID</label>
+                            <input type="text" id="edit-client-id" class="form-control" readonly>
+                            <small class="text-secondary">Client ID cannot be changed</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-client-url" class="form-label">Client URL</label>
+                            <input type="url" id="edit-client-url" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-client-status" class="form-label">Status</label>
+                            <select id="edit-client-status" class="form-control">
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-client-btn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/client-management.js"></script>
+</body>
+</html>

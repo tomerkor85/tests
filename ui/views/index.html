@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadixInsight - Login</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/modern-styles.css">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .modal-dialog {
+            max-width: 500px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-visible { display: block !important; }
+        .d-flex { display: flex; }
+        .justify-content-between { justify-content: space-between; }
+        .align-items-center { align-items: center; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .text-center { text-align: center; }
+        .text-secondary { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-form-container">
+            <div class="auth-form animate-slide-up">
+                <div class="auth-logo">
+                    <h1>RadixInsight</h1>
+                    <p>Analytics Platform</p>
+                </div>
+                <h2 class="auth-form-title">Sign in to your account</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-group d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" id="forgot-password-link" class="text-secondary">Forgot password?</a>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="login-button" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Sign in
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-4 text-center">
+                    <p>Need a new client account? <a href="#" id="register-link">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="registerModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create New Client</h4>
+                    <button type="button" class="btn btn-sm btn-ghost" id="close-register-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="client-name" class="form-label">Client Name</label>
+                            <input type="text" id="client-name" class="form-control" placeholder="Enter client name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-id" class="form-label">Client ID</label>
+                            <input type="text" id="client-id" class="form-control" placeholder="Enter client ID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-url" class="form-label">Client URL</label>
+                            <input type="url" id="client-url" class="form-control" placeholder="https://example.com" required>
+                            <small class="text-secondary">URL where the SDK will be embedded</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-email" class="form-label">Admin Email</label>
+                            <input type="email" id="client-email" class="form-control" placeholder="admin@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-password" class="form-label">Password</label>
+                            <input type="password" id="client-password" class="form-control" placeholder="Create a password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancel-register">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="create-client-button">
+                        <i class="fas fa-plus-circle"></i> Create Client
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Reset Password</h4>
+                    <button type="button" class="btn btn-sm btn-ghost" id="close-forgot-password-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="forgot-password-form">
+                        <div class="form-group">
+                            <label for="reset-email" class="form-label">Email Address</label>
+                            <input type="email" id="reset-email" class="form-control" placeholder="Enter your email" required>
+                            <small class="text-secondary">We'll send you a link to reset your password</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancel-forgot">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="send-reset-button">
+                        <i class="fas fa-paper-plane"></i> Send Reset Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <script src="/js/login.js"></script>
+
+</body>
+</html>

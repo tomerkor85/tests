@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Cache - RadixInsight</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1><a href="/">RadixInsight</a></h1>
+                <p>Event-Based Analytics Platform</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/#overview">Overview</a></li>
+                    <li><a href="/#components">Components</a></li>
+                    <li><a href="/#data-flow">Data Flow</a></li>
+                    <li><a href="/#infrastructure">Infrastructure</a></li>
+                    <li><a href="/#security">Security</a></li>
+                    <li><a href="/#milestones">Milestones</a></li>
+                    <li><a href="/#code">Code Samples</a></li>
+                    <li><a href="/getting-started">Getting Started</a></li>
+                    <li><a href="/api">API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="component-hero">
+        <div class="container">
+            <h1>Redis Cache</h1>
+            <p>In-memory data store for session management and query caching</p>
+        </div>
+    </section>
+
+    <section class="component-details">
+        <div class="container">
+            <div class="component-section">
+                <h2>Overview</h2>
+                <p>The Redis Cache serves as an in-memory data store for the RadixInsight platform, providing high-performance caching, session management, and temporary data storage. It significantly improves application performance by reducing database load and API response times.</p>
+                
+                <p>Key uses of the Redis Cache include:</p>
+                <ul>
+                    <li>User session management</li>
+                    <li>Query result caching</li>
+                    <li>Rate limiting counters</li>
+                    <li>Distributed locks</li>
+                    <li>Real-time metrics and counters</li>
+                    <li>Temporary data storage</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Cache Architecture</h2>
+                <p>The Redis Cache is implemented with a focus on performance, reliability, and appropriate data expiration:</p>
+                
+                <h3>Cache Structure</h3>
+                <p>The cache is organized into logical namespaces:</p>
+                <ul>
+                    <li><strong>sessions:</strong> User session data</li>
+                    <li><strong>queries:</strong> Cached query results</li>
+                    <li><strong>rate_limits:</strong> Rate limiting counters</li>
+                    <li><strong>locks:</strong> Distributed locks</li>
+                    <li><strong>metrics:</strong> Real-time metrics</li>
+                    <li><strong>temp:</strong> Temporary data storage</li>
+                </ul>
+                
+                <h3>Data Types</h3>
+                <p>Redis data types are used appropriately for different use cases:</p>
+                <ul>
+                    <li><strong>Strings:</strong> Simple key-value pairs, serialized JSON objects</li>
+                    <li><strong>Hashes:</strong> User sessions, configuration objects</li>
+                    <li><strong>Lists:</strong> Event queues, recent activity logs</li>
+                    <li><strong>Sets:</strong> Unique collections, tag storage</li>
+                    <li><strong>Sorted Sets:</strong> Leaderboards, time-ordered data</li>
+                    <li><strong>Bitmaps:</strong> Feature flags, online status tracking</li>
+                    <li><strong>HyperLogLog:</strong> Unique visitor counting</li>
+                </ul>
+                
+                <h3>Expiration Policies</h3>
+                <p>Different expiration policies are applied based on data type:</p>
+                <ul>
+                    <li><strong>Sessions:</strong> 24 hours from last activity</li>
+                    <li><strong>Query Results:</strong> Varies by query type (1 minute to 1 hour)</li>
+                    <li><strong>Rate Limits:</strong> 1 minute to 1 hour sliding windows</li>
+                    <li><strong>Locks:</strong> Automatic expiration to prevent deadlocks</li>
+                    <li><strong>Metrics:</strong> Time-based aggregation and expiration</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Implementation</h2>
+                <p>The Redis Cache is implemented with a clean API that abstracts the underlying Redis commands:</p>
+                
+                <h3>Session Management</h3>
+                <p>Redis is used to store user session data:</p>
+                <pre><code class="language-python">
+class SessionManager:
+    def __init__(self, redis_client):
+        self.redis = redis_client
+        self.prefix = "sessions:"
+        self.expiry = 86400  # 24 hours
+    
+    async def create_session(self, user_id, data=None):
+        """Create a new session for a user."""
+        session_id = str(uuid.uuid4())
+        session_key = f"{self.prefix}{session_id}"
+        
+        # Create session hash with user ID and timestamp
+        session_data = {
+            "user_id": user_id,
+            "created_at": int(time.time()),
+            "last_active": int(time.time())
+        }
+        
+        # Add additional data if provided
+        if data:
+            session_data.update(data)
+        
+        # Store session in Redis
+        await self.redis.hmset(session_key, session_data)
+        await self.redis.expire(session_key, self.expiry)
+        
+        return session_id
+    
+    async def get_session(self, session_id):
+        """Get session data and update last active time."""
+        session_key = f"{self.prefix}{session_id}"
+        
+        # Get session data
+        session = await self.redis.hgetall(session_key)
+        
+        if not session:
+            return None
+        
+        # Update last active time
+        await self.redis.hset(session_key, "last_active", int(time.time()))
+        await self.redis.expire(session_key, self.expiry)
+        
+        return session
+    
+    async def delete_session(self, session_id):
+        """Delete a session."""
+        session_key = f"{self.prefix}{session_id}"
+        return await self.redis.delete(session_key)
+                </code></pre>
+                
+                <h3>Query Caching</h3>
+                <p>Redis is used to cache query results for improved performance:</p>
+                <pre><code class="language-python">
+class QueryCache:
+    def __init__(self, redis_client):
+        self.redis = redis_client
+        self.prefix = "queries:"
+    
+    def _generate_cache_key(self, query_type, params):
+        """Generate a cache key based on query type and parameters."""
+        # Sort parameters to ensure consistent key generation
+        param_str = json.dumps(params, sort_keys=True)
+        
+        # Create hash of parameters
+        param_hash = hashlib.md5(param_str.encode()).hexdigest()
+        
+        return f"{self.prefix}{query_type}:{param_hash}"
+    
+    async def get(self, query_type, params, ttl=300):
+        """Get cached query result or None if not found."""
+        cache_key = self._generate_cache_key(query_type, params)
+        
+        # Try to get from cache
+        cached = await self.redis.get(cache_key)
+        
+        if cached:
+            logger.debug(f"Cache hit for {query_type} query")
+            return json.loads(cached)
+        
+        logger.debug(f"Cache miss for {query_type} query")
+        return None
+    
+    async def set(self, query_type, params, result, ttl=300):
+        """Cache query result with specified TTL."""
+        cache_key = self._generate_cache_key(query_type, params)
+        
+        # Store result in cache
+        await self.redis.setex(
+            cache_key,
+            ttl,
+            json.dumps(result)
+        )
+        
+        logger.debug(f"Cached {query_type} query result for {ttl} seconds")
+    
+    async def invalidate(self, query_type, params=None):
+        """Invalidate cache for a specific query or query type."""
+        if params:
+            # Invalidate specific query
+            cache_key = self._generate_cache_key(query_type, params)
+            
+            try:
+                deleted = await self.redis.delete(cache_key)
+                
+                if deleted:
+                    logger.debug(f"Invalidated cache for {query_type} query")
+                return deleted
+            except Exception as e:
+                logger.error(f"Error invalidating cache: {str(e)}")
+                return 0
+        else:
+            # Invalidate all queries of this type
+            pattern = f"{self.prefix}{query_type}:*"
+            
+            try:
+                # Find all matching keys
+                keys = await self.redis.keys(pattern)
+                
+                if not keys:
+                    return 0
+                
+                # Delete all matching keys
+                deleted = await self.redis.delete(*keys)
+                logger.debug(f"Invalidated {deleted} {query_type} query caches")
+                return deleted
+            except Exception as e:
+                logger.error(f"Error invalidating cache: {str(e)}")
+                return 0
+                </code></pre>
+                
+                <h3>Rate Limiting</h3>
+                <p>Redis is used to implement rate limiting for API endpoints:</p>
+                <pre><code class="language-python">
+class RateLimiter:
+    def __init__(self, redis_client):
+        self.redis = redis_client
+        self.prefix = "rate_limits:"
+    
+    async def check_rate_limit(self, key, limit, window_seconds):
+        """
+        Check if a rate limit has been exceeded.
+        
+        Args:
+            key: Unique identifier (e.g., IP address, API key)
+            limit: Maximum number of requests allowed in the window
+            window_seconds: Time window in seconds
+            
+        Returns:
+            tuple: (allowed, current_count, reset_seconds)
+        """
+        rate_key = f"{self.prefix}{key}:{window_seconds}"
+        current_time = int(time.time())
+        window_start = current_time - window_seconds
+        
+        # Remove counts older than the window
+        await self.redis.zremrangebyscore(rate_key, 0, window_start)
+        
+        # Add current request with timestamp as score
+        pipeline = self.redis.pipeline()
+        pipeline.zadd(rate_key, {str(uuid.uuid4()): current_time})
+        pipeline.expire(rate_key, window_seconds)
+        pipeline.zcard(rate_key)
+        _, _, count = await pipeline.execute()
+        
+        # Calculate when the rate limit will reset
+        reset_seconds = window_seconds - (current_time % window_seconds)
+        
+        # Check if limit is exceeded
+        allowed = count <= limit
+        
+        return (allowed, count, reset_seconds)
+                </code></pre>
+                
+                <h3>Distributed Locks</h3>
+                <p>Redis is used to implement distributed locks for coordinating access to shared resources:</p>
+                <pre><code class="language-python">
+class DistributedLock:
+    def __init__(self, redis_client):
+        self.redis = redis_client
+        self.prefix = "locks:"
+    
+    async def acquire(self, resource_name, lock_id=None, ttl=10):
+        """
+        Acquire a lock on a resource.
+        
+        Args:
+            resource_name: Name of the resource to lock
+            lock_id: Unique identifier for the lock (generated if not provided)
+            ttl: Time-to-live in seconds for the lock
+            
+        Returns:
+            lock_id if lock was acquired, None otherwise
+        """
+        lock_id = lock_id or str(uuid.uuid4())
+        lock_key = f"{self.prefix}{resource_name}"
+        
+        # Try to set the lock key with NX option (only if it doesn't exist)
+        acquired = await self.redis.set(
+            lock_key,
+            lock_id,
+            ex=ttl,
+            nx=True
+        )
+        
+        return lock_id if acquired else None
+    
+    async def release(self, resource_name, lock_id):
+        """
+        Release a lock on a resource.
+        
+        Args:
+            resource_name: Name of the resource to unlock
+            lock_id: Unique identifier for the lock
+            
+        Returns:
+            bool: True if lock was released, False otherwise
+        """
+        lock_key = f"{self.prefix}{resource_name}"
+        
+        # Use Lua script to ensure we only delete the lock if it matches our lock_id
+        script = """
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+            return redis.call('del', KEYS[1])
+        else
+            return 0
+        end
+        """
+        
+        result = await self.redis.eval(
+            script,
+            keys=[lock_key],
+            args=[lock_id]
+        )
+        
+        return bool(result)
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Redis Configuration</h2>
+                <p>The Redis Cache is configured for optimal performance and reliability:</p>
+                
+                <h3>Basic Configuration</h3>
+                <pre><code>
+# Redis configuration
+maxmemory 2gb
+maxmemory-policy allkeys-lru
+appendonly yes
+appendfsync everysec
+                </code></pre>
+                
+                <h3>High Availability Setup</h3>
+                <pre><code>
+# Redis Sentinel configuration
+sentinel monitor mymaster redis-master 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+                </code></pre>
+                
+                <h3>Docker Deployment</h3>
+                <pre><code>
+# Docker Compose configuration
+redis-master:
+  image: redis:6
+  command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 2gb --maxmemory-policy allkeys-lru
+  volumes:
+    - redis_data:/data
+  ports:
+    - "6379:6379"
+
+redis-replica:
+  image: redis:6
+  command: redis-server --requirepass ${REDIS_PASSWORD} --replicaof redis-master 6379 --masterauth ${REDIS_PASSWORD}
+  depends_on:
+    - redis-master
+
+redis-sentinel-1:
+  image: redis:6
+  command: redis-sentinel /redis-sentinel/sentinel.conf
+  volumes:
+    - ./redis-sentinel/sentinel.conf:/redis-sentinel/sentinel.conf
+  depends_on:
+    - redis-master
+    - redis-replica
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Connection Management</h2>
+                <p>Redis connections are managed efficiently to ensure optimal performance:</p>
+                
+                <h3>Connection Pool</h3>
+                <pre><code class="language-python">
+# Redis connection pool setup
+from redis.asyncio import ConnectionPool, Redis
+
+async def init_redis():
+    global redis_client
+    
+    # Create connection pool
+    pool = ConnectionPool(
+        host=config.REDIS_HOST,
+        port=config.REDIS_PORT,
+        password=config.REDIS_PASSWORD,
+        db=config.REDIS_DB,
+        max_connections=config.REDIS_MAX_CONNECTIONS,
+        decode_responses=True
+    )
+    
+    # Create Redis client with connection pool
+    redis_client = Redis(connection_pool=pool)
+    
+    # Test connection
+    try:
+        await redis_client.ping()
+        logger.info("Connected to Redis successfully")
+    except Exception as e:
+        logger.error(f"Failed to connect to Redis: {str(e)}")
+        raise
+    
+    return redis_client
+                </code></pre>
+                
+                <h3>Sentinel Support</h3>
+                <pre><code class="language-python">
+# Redis Sentinel connection setup
+from redis.asyncio.sentinel import Sentinel
+
+async def init_redis_sentinel():
+    global redis_client
+    
+    # Create Sentinel client
+    sentinel = Sentinel(
+        [(host, port) for host, port in config.REDIS_SENTINELS],
+        password=config.REDIS_PASSWORD,
+        decode_responses=True
+    )
+    
+    # Get master Redis client
+    redis_client = sentinel.master_for(
+        config.REDIS_MASTER_NAME,
+        socket_timeout=config.REDIS_SOCKET_TIMEOUT
+    )
+    
+    # Test connection
+    try:
+        await redis_client.ping()
+        logger.info("Connected to Redis master via Sentinel successfully")
+    except Exception as e:
+        logger.error(f"Failed to connect to Redis via Sentinel: {str(e)}")
+        raise
+    
+    return redis_client
+                </code></pre>
+                
+                <h3>Connection Health Checks</h3>
+                <pre><code class="language-python">
+async def check_redis_health():
+    """Check Redis connection health."""
+    try:
+        # Check if Redis is responsive
+        if not await redis_client.ping():
+            return False
+        
+        # Check memory usage
+        info = await redis_client.info("memory")
+        used_memory = info["used_memory"]
+        used_memory_peak = info["used_memory_peak"]
+        
+        # Alert if memory usage is above 80% of peak
+        if used_memory > used_memory_peak * 0.8:
+            logger.warning(f"Redis memory usage is high: {used_memory} bytes ({used_memory / used_memory_peak * 100:.1f}% of peak)")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Redis health check failed: {str(e)}")
+        return False
+                </code></pre>
+            </div>
+            
+            <div class="component-section">
+                <h2>Performance Considerations</h2>
+                <p>Several measures are implemented to ensure optimal Redis performance:</p>
+                
+                <h3>Memory Management</h3>
+                <ul>
+                    <li>LRU eviction policy for automatic memory management</li>
+                    <li>Appropriate TTL values for different data types</li>
+                    <li>Monitoring of memory usage and fragmentation</li>
+                    <li>Periodic cleanup of expired keys</li>
+                </ul>
+                
+                <h3>Command Optimization</h3>
+                <ul>
+                    <li>Use of pipelining for multiple operations</li>
+                    <li>Batch operations for bulk data processing</li>
+                    <li>Lua scripts for atomic operations</li>
+                    <li>Efficient data serialization</li>
+                </ul>
+                
+                <h3>Connection Efficiency</h3>
+                <ul>
+                    <li>Connection pooling to minimize connection overhead</li>
+                    <li>Keepalive settings to maintain persistent connections</li>
+                    <li>Timeout handling to prevent resource leaks</li>
+                    <li>Automatic reconnection after failures</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Monitoring and Observability</h2>
+                <p>The Redis Cache includes comprehensive monitoring:</p>
+                
+                <h3>Key Metrics</h3>
+                <ul>
+                    <li>Memory usage and fragmentation</li>
+                    <li>Hit/miss ratio for cache operations</li>
+                    <li>Command execution rate and latency</li>
+                    <li>Connection count and client list</li>
+                    <li>Eviction and expiration rates</li>
+                </ul>
+                
+                <h3>Alerting</h3>
+                <ul>
+                    <li>High memory usage alerts</li>
+                    <li>Low cache hit ratio alerts</li>
+                    <li>Connection count threshold alerts</li>
+                    <li>Replication lag alerts</li>
+                    <li>High command latency alerts</li>
+                </ul>
+                
+                <h3>Logging</h3>
+                <ul>
+                    <li>Slow command logging</li>
+                    <li>Error and warning logging</li>
+                    <li>Connection events logging</li>
+                    <li>Cache operation statistics</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>Future Enhancements</h2>
+                <p>Planned improvements for the Redis Cache include:</p>
+                
+                <ul>
+                    <li><strong>Redis Cluster:</strong> Horizontal scaling for larger datasets</li>
+                    <li><strong>Redis Streams:</strong> Event streaming for real-time analytics</li>
+                    <li><strong>Redis Modules:</strong> Integration of specialized modules like RedisJSON and RediSearch</li>
+                    <li><strong>Intelligent Caching:</strong> Machine learning-based cache warming and invalidation</li>
+                    <li><strong>Multi-region Replication:</strong> Global distribution for reduced latency</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RadixInsight. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
